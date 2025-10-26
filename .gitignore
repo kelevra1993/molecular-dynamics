@@ -1,0 +1,66 @@
+# -----------------------------
+# macOS
+# -----------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+*.icloud
+
+# -----------------------------
+# Python (optional)
+# -----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+.venv
+venv/
+env/
+.idea/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# -----------------------------
+# VSCode / IDEs (optional)
+# -----------------------------
+.vscode/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+*.swp
+
+# -----------------------------
+# General OS / Backup files
+# -----------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.bak
+*.tmp
+*.log
+
+# -----------------------------
+# macOS metadata folders
+# -----------------------------
+.DS_Store?
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+
+# -----------------------------
+# Simulations
+# -----------------------------
+simulations/

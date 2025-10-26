@@ -15,11 +15,6 @@ positions = 100.0 * np.random.rand(number_particles, dimensions)
 # Possibility for them to just point in different directions
 velocities = 100.0 * (np.random.rand(number_particles, dimensions) - 0.5)
 
-print("Positions")
-print(round_up_array(positions))
-
-print("Velocities")
-print(round_up_array(velocities))
 
 boundary_conditions = ["periodic", "reflective"]
 
@@ -30,14 +25,11 @@ for boundary_condition in boundary_conditions:
     # Create the simulation directory if it does not exist
     os.makedirs(simulation_destination, exist_ok=True)
 
-    for iteration_index in range(10):
+    for iteration_index in range(1000):
         positions, velocities = update_positions_and_velocities(positions=positions, velocities=velocities,
                                                                 simulation_box_size=simulation_box_size,
                                                                 boundary_conditions=boundary_condition,
                                                                 time_step=time_step)
-        print(100 * "-")
-        print(f"Timestamp {iteration_index} :")
-        print(round_up_array(positions))
-        print(100 * "-")
+
         write_positions_to_file(positions=positions, simulation_box_size=simulation_box_size,
                                 simulation_directory=simulation_destination, iteration_index=iteration_index)
