@@ -9,6 +9,9 @@ from utilities.utils import print_blue, print_yellow
 np.set_printoptions(linewidth=int(1e5))
 
 
+#############################
+# Computation Of Potentials #
+#############################
 def compute_pairwise_lennard_jones_potentials(positions, atom_index, sigma, epsilon):
     vectors_to_atom_i = positions[atom_index] - positions
 
@@ -59,14 +62,60 @@ def compute_lennard_jones_gradient_potential(positions, atom_index, sigma, epsil
     return lennard_jones_gradient_potential
 
 
-def update_velocity_using_forces(positions, velocities, time_step, sigma, epsilon, mass_dictionary):
+def compute_bond_energy_potentials(positions, bonds):
+    # bonds is a list that contains these elements
+    # element_1=[first_atom_index, second_atom_index, bond length , bond strength]
+    # element_2=[first_atom_index, second_atom_index, bond length , bond strength]
+    # ...
+    number_particles = positions.shape[0]
+
+    # We initialise with 0 bond potentials for every position since each atom is not necessarily bonded
+    bond_potentials = np.zeros(number_particles)
+
+    for atom_index in range(number_particles):
+        for bond_index in range(len(bonds)):
+            first_bonded_atom = bonds[bond_index][0]
+            second_bonded_atom = bonds[bond_index][1]
+
+            # Case where our atom has a bond
+            if atom_index == first_bonded_atom or atom_index == second_bonded_atom:
+
+                # Find atom bonded to atom_index
+                if first_bonded_atom == atom_index:
+                    bonded_atom = int(second_bonded_atom)
+                else:
+                    bonded_atom = int(first_bonded_atom)
+
+                optimal_bond_length = bonds[bond_index][2]
+                bond_strength = bonds[bond_index][3]
+
+                vector_bonded_particles = positions[atom_index] - positions[bonded_atom]
+                distance_bonded_particles = np.sqrt(sum(vector_bonded_particles * vector_bonded_particles))
+
+                bond_potential = bond_strength * ((distance_bonded_particles - optimal_bond_length) ** 2)
+
+                # Avoid counting it twice since it should also appear on the bonded atom index
+                bond_potentials[atom_index] += 0.5 * bond_potential
+                # TODO To Be Removed : Just the debugging of bonds
+                print(f"Atom Index : {atom_index}  >> Bonded Atom Index : {bonded_atom}  >> Potential {0.5 * bond_potential}")
+    print(bond_potentials)
+    print(bond_potentials.shape)
+    exit()
+    return bond_potentials
+
+
+
+####################################
+# End Of Computation Of Potentials #
+####################################
+
+def update_velocity_using_forces(positions, velocities, time_step, sigma, epsilon, masses):
     # Compute Forces interacting on all molecules based on leonard jones interactions
     forces = -np.array(
         [compute_lennard_jones_gradient_potential(positions=positions, atom_index=index, sigma=sigma, epsilon=epsilon)
          for index in range(len(positions))])
 
-    # TODO Will have to be changed to be better especially how we define our atoms
-    accelerations = forces / mass_dictionary["hydrogen"]
+    accelerations = np.transpose(np.transpose(forces) / masses)
 
     # Integrate since we consider that the acceleration is constant
     updated_velocities = velocities + (accelerations * time_step)
@@ -85,9 +134,15 @@ def correct_velocities_based_on_temperature(velocities, masses, boltzman_constan
     # Correction value
     correction_value = np.sqrt(desired_temperature / current_temperature)
 
+    # # Playing around with temperature manipulation
     # # Controlled Velocity Update -- Could be tried
     # alpha = 0.5
     # alpha_corrected_velocities = alpha * (correction_value * velocities) + (1 - alpha) * velocities
+    # print(100*'-')
+    # print(f"Current Temperature : {current_temperature}")
+    # average_corrected_kinetic_energy = 0.5 * sum(sum(masses * np.transpose(corrected_velocities * corrected_velocities)))
+    # print(f"Corrected Temperature : {(2 / 3) * average_corrected_kinetic_energy / boltzman_constant}")
+    # print(100 * '-')
 
     corrected_velocities = correction_value * velocities
 

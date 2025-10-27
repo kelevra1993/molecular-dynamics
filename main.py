@@ -8,23 +8,35 @@ import numpy as np
 from utilities.utils import round_up_array, write_positions_to_file, define_mass_lookup_tables, get_particle_mass, \
     get_positions_velocities_masses
 from force_fields.functions import update_positions_and_velocities, update_velocity_using_forces, \
-    correct_velocities_based_on_temperature
+    correct_velocities_based_on_temperature,compute_bond_energy_potentials
 from utilities.constants import number_particles, dimensions, simulation_steps, simulation_box_size, time_step, \
     simulation_directory, lennard_jones_paramaters, mass_dictionary, boltzman_constant, desired_temperature
 
 particle_dictionary = {}
 for particle_index in range(number_particles):
-    particle_dictionary[str(particle_index)] = {"position": 100 * np.random.rand(1, dimensions),
+    particle_dictionary[str(particle_index)] = {"position": simulation_box_size * np.random.rand(1, dimensions),
                                                 "velocity": 100 * np.random.rand(1, dimensions),
                                                 "mass": get_particle_mass(particle_index=particle_index,
                                                                           number_particles=number_particles,
-                                                                          available_masses=[1, 10]),
+                                                                          available_masses=[1, 1]),
                                                 "particle_type": 0 if particle_index < number_particles / 2 else 1,
 
                                                 }
 
 positions, velocities, masses, particle_types = get_positions_velocities_masses(particle_dictionary=particle_dictionary,
                                                                                 number_particles=number_particles)
+# print(*positions, sep="\n")
+# Definition of bonds for water
+bonds = []
+for i in range(int(number_particles / 3)):
+    bonds.append([3 * i, 3 * i + 1, 1.0, 100.0])  # [first_atom_index, second_atom_index, bond length , bond strength]
+    bonds.append([3 * i + 1, 3 * i + 2, 1.0, 100.0])
+# print(*bonds, sep="\n")
+
+compute_bond_energy_potentials(positions=positions,bonds=bonds)
+
+
+exit()
 
 # # Initialize random positions
 # positions = 100.0 * np.random.rand(number_particles, dimensions)
@@ -44,7 +56,7 @@ if beta_testing:
     velocities = np.array([[0, 0, 0], [0, 0, 0], ])
     masses, particle_types = define_mass_lookup_tables(number_particles=2, available_masses=[1, 1])
 
-boundary_conditions = ["periodic", "reflective"]
+boundary_conditions = ["reflective"]
 
 for boundary_condition in boundary_conditions:
 
@@ -63,7 +75,7 @@ for boundary_condition in boundary_conditions:
         velocities, acceleration = update_velocity_using_forces(positions=positions, velocities=velocities,
                                                                 sigma=lennard_jones_paramaters["sigma"],
                                                                 epsilon=lennard_jones_paramaters["epsilon"],
-                                                                time_step=time_step, mass_dictionary=mass_dictionary)
+                                                                time_step=time_step, masses=masses)
 
         # Correct the velocities based on temperatures
         velocities = correct_velocities_based_on_temperature(velocities=velocities, masses=masses,
