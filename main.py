@@ -6,38 +6,64 @@ import shutil
 import numpy as np
 
 from utilities.utils import round_up_array, write_positions_to_file, define_mass_lookup_tables, get_particle_mass, \
-    get_positions_velocities_masses
+    get_particle_type, get_positions_velocities_masses, print_dictionary, get_molecule_index
 from force_fields.functions import update_positions_and_velocities, update_velocity_using_forces, \
-    correct_velocities_based_on_temperature,compute_bond_energy_potentials
+    correct_velocities_based_on_temperature, compute_angle_gradient_potential
 from utilities.constants import number_particles, dimensions, simulation_steps, simulation_box_size, time_step, \
-    simulation_directory, lennard_jones_paramaters, mass_dictionary, boltzman_constant, desired_temperature
+    simulation_directory, lennard_jones_paramaters, mass_dictionary, boltzman_constant, desired_temperature, \
+    water_bond_spring_constant, water_bond_length, water_angle_spring_constant, water_angle
 
 particle_dictionary = {}
 for particle_index in range(number_particles):
     particle_dictionary[str(particle_index)] = {"position": simulation_box_size * np.random.rand(1, dimensions),
-                                                "velocity": 100 * np.random.rand(1, dimensions),
+                                                "velocity": np.random.rand(1, dimensions) - 0.5,
                                                 "mass": get_particle_mass(particle_index=particle_index,
-                                                                          number_particles=number_particles,
-                                                                          available_masses=[1, 1]),
-                                                "particle_type": 0 if particle_index < number_particles / 2 else 1,
+                                                                          molecule_type="water",
+                                                                          mass_dictionary=mass_dictionary),
+                                                "particle_type": get_particle_type(particle_index=particle_index,
+                                                                                   molecule_type="water"),
+                                                "molecule_index": get_molecule_index(particle_index=particle_index,
+                                                                                     molecule_type="water")}
 
-                                                }
-
-positions, velocities, masses, particle_types = get_positions_velocities_masses(particle_dictionary=particle_dictionary,
-                                                                                number_particles=number_particles)
-# print(*positions, sep="\n")
-# Definition of bonds for water
-bonds = []
-for i in range(int(number_particles / 3)):
-    bonds.append([3 * i, 3 * i + 1, 1.0, 100.0])  # [first_atom_index, second_atom_index, bond length , bond strength]
-    bonds.append([3 * i + 1, 3 * i + 2, 1.0, 100.0])
-# print(*bonds, sep="\n")
-
-compute_bond_energy_potentials(positions=positions,bonds=bonds)
+positions, velocities, masses, particle_types, molecule_indexes = get_positions_velocities_masses(
+    particle_dictionary=particle_dictionary, number_particles=number_particles)
 
 
+def get_water_bonds(number_particles, water_bond_spring_constant, bond_length):
+    bonds = []
+    for i in range(int(number_particles / 3)):
+        bonds.append([3 * i, 3 * i + 1, bond_length,
+                      water_bond_spring_constant])  # [first_atom_index, second_atom_index, bond length , bond strength]
+        bonds.append([3 * i + 1, 3 * i + 2, bond_length, water_bond_spring_constant])
+
+    return bonds
+
+
+def get_dihydrogen_bonds(number_particles):
+    bonds = []
+    for i in range(int(number_particles / 2)):
+        bonds.append(
+            [2 * i, 2 * i + 1, 1.0, 100.0])  # [first_atom_index, second_atom_index, bond length , bond strength]
+
+    return bonds
+
+
+def get_water_angles(number_particles, water_angle_spring_constant, water_angle):
+    angles = []
+    for i in range(int(number_particles / 3)):
+        angles.append([3 * i, 3 * i + 1, 3 * i + 2, water_angle,
+                       water_angle_spring_constant])  # [first_atom_index, second_atom_index, third atom index, angle , angle spring constant]
+
+    return angles
+
+
+bonds = get_water_bonds(number_particles=number_particles, water_bond_spring_constant=water_bond_spring_constant,
+                        bond_length=water_bond_length)
+angles = get_water_angles(number_particles=number_particles, water_angle_spring_constant=water_angle_spring_constant,
+                          water_angle=water_angle)
+
+compute_angle_gradient_potential(positions=positions, angles=angles,dimensions=dimensions)
 exit()
-
 # # Initialize random positions
 # positions = 100.0 * np.random.rand(number_particles, dimensions)
 #
@@ -72,10 +98,11 @@ for boundary_condition in boundary_conditions:
     for iteration_index in range(simulation_steps):
         # First get velocities based on potential enegies
         # currently only lennard_jones interactions
-        velocities, acceleration = update_velocity_using_forces(positions=positions, velocities=velocities,
+        velocities, acceleration = update_velocity_using_forces(positions=positions, velocities=velocities, bonds=bonds,
                                                                 sigma=lennard_jones_paramaters["sigma"],
                                                                 epsilon=lennard_jones_paramaters["epsilon"],
-                                                                time_step=time_step, masses=masses)
+                                                                time_step=time_step, masses=masses,
+                                                                dimensions=dimensions)
 
         # Correct the velocities based on temperatures
         velocities = correct_velocities_based_on_temperature(velocities=velocities, masses=masses,

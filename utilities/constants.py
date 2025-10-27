@@ -1,6 +1,7 @@
 """
 # TODO To be documented
 """
+import numpy as np
 
 # Simulation Destination
 simulation_directory = "/Users/Robert/PycharmProjects/molecular-dynamics/simulations"
@@ -8,17 +9,30 @@ simulation_directory = "/Users/Robert/PycharmProjects/molecular-dynamics/simulat
 # Simulation Global Parameters
 number_particles = 30
 dimensions = 3
-time_step = 0.005  # timesteps in pico-seconds so 1e-12
-simulation_steps = 5000
-simulation_box_size = 30  # System in Angstom
-desired_temperature = 1000000
+time_step = 0.01  # timesteps in pico-seconds so 1e-12
+simulation_steps = 500
+simulation_box_size = 40  # System in Angstom
+desired_temperature = 10
 # Lennard-Jones Interaction Parameters
 # For hydrogen
 # Sigma In angstrom
-lennard_jones_paramaters = {"epsilon": 500.0, "sigma": 2.928}
+lennard_jones_paramaters = {"epsilon": 3000.0, "sigma": 2.928}
 
 # Partical Masses in Dalton
 mass_dictionary = {"hydrogen": 1, "nitrogen": 14, "carbon": 12, "oxygen": 16}
+
+# TODO To Document
+# Water bond spring constant
+water_bond_spring_constant = 148000.0 / 2
+
+# Water bond length
+water_bond_length = 0.9611
+
+# TODO Water spring constant
+water_angle_spring_constant = 35300.0/2
+
+# TODO Water angle
+water_angle = 104.45 * np.pi / 180.0  # Angles in Radian
 
 # How to keep energy constant in the system to avoid energy increasing ?
 # We will keep temperature constant
