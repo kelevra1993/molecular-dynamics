@@ -52,20 +52,28 @@ def get_particle_type(particle_index, molecule_type):
 
 
 def get_molecule_index(particle_index, molecule_type):
-    # Masses in Dalton
     if molecule_type != "water":
         exit("The only covered molecule type is 'water'")
 
     if molecule_type == "water":
         molecule_index = particle_index // 3
-        if particle_index % 3 == 1:
-            particle_type = 1
-        else:
-            particle_type = 0
-
     # print(f"Particle Index >> {particle_index} And Molecule Index {molecule_index}")
 
-    return particle_type
+    return molecule_index
+
+
+def get_atome_charge(particle_index, molecule_type, atome_charge_dictionary):
+    if molecule_type != "water":
+        exit("The only covered molecule type is 'water'")
+
+    if molecule_type == "water":
+        atome_charges = atome_charge_dictionary[molecule_type]
+        if particle_index % 3 == 1:
+            atome_charge = atome_charges["oxygen"]
+        else:
+            atome_charge = atome_charges["hydrogen"]
+
+    return atome_charge
 
 
 def get_positions_velocities_masses(particle_dictionary, number_particles):
@@ -75,6 +83,7 @@ def get_positions_velocities_masses(particle_dictionary, number_particles):
     masses = [particle_dictionary[str(i)]["mass"] for i in range(number_particles)]
     particle_types = [particle_dictionary[str(i)]["particle_type"] for i in range(number_particles)]
     molecule_indexes = [particle_dictionary[str(i)]["molecule_index"] for i in range(number_particles)]
+    electrical_charges = [particle_dictionary[str(i)]["electrical_charge"] for i in range(number_particles)]
 
     # Optionally, convert to numpy arrays
     positions = np.vstack(positions)  # shape: (number_particles, dimensions)
@@ -82,8 +91,9 @@ def get_positions_velocities_masses(particle_dictionary, number_particles):
     masses = np.array(masses)  # shape: (number_particles,)
     particle_types = np.array(particle_types)  # shape: (number_particles,)
     molecule_indexes = np.array(molecule_indexes)  # shape: (number_particles,)
+    electrical_charges = np.array(electrical_charges)  # shape: (number_particles,)
 
-    return positions, velocities, masses, particle_types, molecule_indexes
+    return positions, velocities, masses, particle_types, molecule_indexes, electrical_charges
 
 
 def write_positions_to_file(positions, simulation_box_size, simulation_directory, iteration_index, particle_types):

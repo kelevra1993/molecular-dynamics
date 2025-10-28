@@ -21,6 +21,9 @@ lennard_jones_paramaters = {"epsilon": 3000.0, "sigma": 2.928}
 # Partical Masses in Dalton
 mass_dictionary = {"hydrogen": 1, "nitrogen": 14, "carbon": 12, "oxygen": 16}
 
+# Atome Charge Dictionary
+atome_charge_dictionary = {"water": {"oxygen": -0.82, "hydrogen": 0.41}}
+
 # TODO To Document
 # Water bond spring constant
 water_bond_spring_constant = 148000.0 / 2
@@ -29,7 +32,7 @@ water_bond_spring_constant = 148000.0 / 2
 water_bond_length = 0.9611
 
 # TODO Water spring constant
-water_angle_spring_constant = 35300.0/2
+water_angle_spring_constant = 35300.0 / 2
 
 # TODO Water angle
 water_angle = 104.45 * np.pi / 180.0  # Angles in Radian
@@ -43,3 +46,8 @@ boltzman_constant = 1.380649E-23  # In SI, this is equivalent to [m2] [kg] [s-2]
 boltzman_constant = boltzman_constant * 6.02228E26  # Turning kg -> Da since we know 1Da = 1,6605E-27 Kg so [m2] [Da] [s-2] [K-1]
 boltzman_constant = boltzman_constant * 1E20  # Turning m -> Angstrom2(A)  sine we know 1Da = 1,6605E-27 Kg so [A^2] [Da] [s-2] [K-1]
 boltzman_constant = boltzman_constant / 1E24  # Turning seconds -> picosends(A^2)  sine we know 1Da = 1,6605E-27 Kg so [A^2] [Da] [s-2] [K-1]  # Kb = 0.8314654859720001
+
+# Coulombs constant
+avagadros_constant_g_wise = 6.02228E26  # Avogardos constant x 1000 (g->kg)
+electron_charge = 1.60217662E-19  # electron charge in coulombs
+coulombs_constant = 8.9875517923E9 * avagadros_constant_g_wise * 1E30 * electron_charge * electron_charge / 1E24  # electrostatic constant in Daltons, electron charges, picosecond, angstrom units

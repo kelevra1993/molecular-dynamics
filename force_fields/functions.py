@@ -189,17 +189,49 @@ def compute_angle_gradient_potential(positions, angles, dimensions):
                 if first_atom == atom_index or third_atom == atom_index:
                     numerator = (second_vector / (first_vector_norm * second_vector_norm)) - (
                             dot_product / (2 * (first_vector_norm ** 3) * second_vector_norm))
-                    angle_potential = (
+                    angle_gradient_potential = (
                             negative_angle_potential_derivative_with_respect_to_theta * numerator / denominator)
-                    angle_gradient_potentials[atom_index] += angle_potential
+                    angle_gradient_potentials[atom_index] += angle_gradient_potential
+
                 # Dealing with middle atom
                 if second_atom == atom_index:
-                    first_part = -(second_vector + first_vector)
+                    first_part = -(first_vector + second_vector)
                     second_part = dot_product * first_vector / (first_vector_norm ** 2)
                     third_part = dot_product * second_vector / (second_vector_norm ** 2)
-                    numerator = (first_part - second_part + third_part)
+                    numerator = (first_part - second_part + third_part) / (first_vector_norm * second_vector_norm)
+                    angle_gradient_potential = negative_angle_potential_derivative_with_respect_to_theta * numerator / denominator
+                    angle_gradient_potentials[atom_index] += angle_gradient_potential
 
-    print(*angle_gradient_potentials, sep="\n")
+    return angle_gradient_potentials
+
+
+def compute_coulomb_force(positions, charges, particle_index, molecule_indexes, coulombs_constant):
+    number_particles = positions.shape[0]
+
+    particle_charge = charges[particle_index]
+
+    # Set particles of the same molecule to have 0.0 chare relative to each other
+    # No coulomb force between them
+    standardised_particle_charges_per_molecule = charges.copy()
+
+    for other_particle in range(number_particles):
+        if molecule_indexes[particle_index] == molecule_indexes[other_particle]:
+            standardised_particle_charges_per_molecule[other_particle] = 0.0
+
+    # Remove the particle_index from the standardised particle charges per molecule
+    standardised_particle_charges_per_molecule = np.delete(standardised_particle_charges_per_molecule, particle_index)
+
+    # Compute vectors and remove 0 vector to avoid dividing by 0
+    vectors = positions[particle_index] - positions
+    vectors = np.delete(vectors, particle_index, axis=0)
+
+    vector_norms = np.linalg.norm(vectors, axis=1)
+
+    # print(f"Particle Index {particle_index} >> Particle Charge {particle_charge}")
+    # print(f"Particle Index {particle_index} >> Standardised Particle Charges {standardised_particle_charges_per_molecule}")
+    print(*vectors, sep='\n')
+    print(vector_norms)
+    exit()
     return 0
 
 
@@ -226,6 +258,7 @@ def update_velocity_using_forces(positions, velocities, bonds, time_step, sigma,
     return updated_velocities, accelerations
 
 
+# todo to be changed since it need to be double checked to maintain temperature
 def correct_velocities_based_on_temperature(velocities, masses, boltzman_constant, desired_temperature):
     number_particles = len(velocities)
     kinetic_energy = 0.5 * sum(sum(masses * np.transpose(velocities * velocities)))
