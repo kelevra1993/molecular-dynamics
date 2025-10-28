@@ -16,8 +16,18 @@ desired_temperature = 10
 # Lennard-Jones Interaction Parameters
 # For hydrogen
 # Sigma In angstrom
-lennard_jones_paramaters = {"epsilon": 3000.0, "sigma": 2.928}
-
+lennard_jones_parameters = {
+    "epsilon": {
+        "oxygen_oxygen": 62.87,
+        "oxygen_hydrogen": 14.2723,
+        "hydrogen_hydrogen": 3.24
+    },
+    "sigma": {
+        "oxygen_oxygen": 3.1169,
+        "oxygen_hydrogen": 2.04845,
+        "hydrogen_hydrogen": 0.98
+    }
+}
 # Partical Masses in Dalton
 mass_dictionary = {"hydrogen": 1, "nitrogen": 14, "carbon": 12, "oxygen": 16}
 

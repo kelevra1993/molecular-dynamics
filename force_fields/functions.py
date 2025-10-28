@@ -4,41 +4,59 @@
 import numpy as np
 import math
 
+from utilities.constants import number_particles
 from utilities.utils import print_blue, print_yellow
 
 # Numpy Options
 np.set_printoptions(linewidth=int(1e5))
 
 
-#############################
-# Computation Of Potentials #
-#############################
-# TODO Remove pairwise potentials for the same molecule so add bond argument
-def compute_pairwise_lennard_jones_potentials(positions, bonds, atom_index, sigma, epsilon):
-    vectors_to_atom_i = positions[atom_index] - positions
-
-    # Remove the atom index, since pairwise interaction with itself does not matter
-    vectors_to_atom_i = np.delete(vectors_to_atom_i, atom_index, axis=0)
-
-    # Get distance to atom i
-    absolute_distances_to_atom_i = np.linalg.norm(vectors_to_atom_i, axis=1)
-
-    # Get Potential
-    # attractive to the power 6
-    attractive_part = (sigma / absolute_distances_to_atom_i) ** 6
-
-    # repulsive to the power 12
-    repulsive_part = (sigma / absolute_distances_to_atom_i) ** 12
-
-    # Put the lennard jones potential together
-    # Here we add up all the potentials between atom i and all other atoms
-    lennard_jones_potential = 4 * epsilon * sum(repulsive_part - attractive_part)
-
-    return lennard_jones_potential
-
+######################################
+# Computation Of Gradient Potentials #
+######################################
 
 # TODO Remove pairwise potentials for the same molecule so add bond argument
-def compute_lennard_jones_gradient_potential(positions, bonds, atom_index, sigma, epsilon):
+def compute_lennard_jones_gradient_potential(positions, molecule_indexes, atom_types, atom_index, sigma, epsilon):
+    number_particles = positions.shape[0]
+
+    atom_type = atom_types[atom_index]
+
+    # Create sigma and epsilon pairwise values
+    sigma_vector = []
+    for other_atom_index in range(number_particles):
+        other_atom_type = atom_types[other_atom_index]
+
+        # hydrogen-hydrogen or oxygen-oxygen
+        if atom_type == other_atom_type:
+            sigma_vector.append(sigma[f"{atom_type}_{atom_type}"])
+        else:
+            sigma_vector.append(sigma["oxygen_hydrogen"])
+
+    epsilon_vector = []
+    for other_atom_index in range(number_particles):
+        other_atom_type = atom_types[other_atom_index]
+
+        # hydrogen-hydrogen or oxygen-oxygen
+        if atom_type == other_atom_type:
+            epsilon_vector.append(epsilon[f"{atom_type}_{atom_type}"])
+        else:
+            epsilon_vector.append(epsilon["oxygen_hydrogen"])
+
+    sigma_vector = np.array(sigma_vector)
+    epsilon_vector = np.array(epsilon_vector)
+
+    # For same molecule set epsilon and sigma to zero
+    molecule_index = molecule_indexes[atom_index]
+    for other_atom_index in range(number_particles):
+        other_molecule_index = molecule_indexes[other_atom_index]
+        if molecule_index == other_molecule_index:
+            epsilon_vector[other_atom_index] = 0
+            sigma_vector[other_atom_index] = 0
+
+    # Remove item-wise sigma and epsilon
+    sigma_vector = np.delete(sigma_vector, atom_index)
+    epsilon_vector = np.delete(epsilon_vector, atom_index)
+
     vectors_to_atom_i = positions[atom_index] - positions
 
     # Remove the atom index, since pairwise interaction with itself does not matter
@@ -49,58 +67,20 @@ def compute_lennard_jones_gradient_potential(positions, bonds, atom_index, sigma
 
     # Get Potential Gradient
     # gradient of attractive term
-    attractive_part = (sigma ** 6) / (absolute_distances_to_atom_i ** 8)
+    attractive_part = epsilon_vector * (sigma_vector ** 6) / (absolute_distances_to_atom_i ** 8)
 
     # gradient of repulsive term
-    repulsive_part = (2 * (sigma ** 12)) / (absolute_distances_to_atom_i ** 14)
+    repulsive_part = epsilon_vector * (2 * (sigma_vector ** 12)) / (absolute_distances_to_atom_i ** 14)
 
-    gradient_term = (repulsive_part - attractive_part)
+    gradient_term = repulsive_part - attractive_part
 
     # Becareful here * is not a matrix multiplication in the common sense.
     gradient_term_applied_to_vector = np.transpose(np.transpose(vectors_to_atom_i) * gradient_term)
 
     # Sum up everything so that we get the gradient in the x, y and z direction
-    lennard_jones_gradient_potential = -24 * epsilon * (np.sum(gradient_term_applied_to_vector, axis=0))
+    lennard_jones_gradient_potential = -24 * (np.sum(gradient_term_applied_to_vector, axis=0))
 
     return lennard_jones_gradient_potential
-
-
-def compute_bond_energy_potentials(positions, bonds):
-    # bonds is a list that contains these elements
-    # element_1=[first_atom_index, second_atom_index, bond length , bond strength]
-    # element_2=[first_atom_index, second_atom_index, bond length , bond strength]
-    # ...
-    number_particles = positions.shape[0]
-
-    # We initialise with 0 bond potentials for every position since each atom is not necessarily bonded
-    bond_potentials = np.zeros(number_particles)
-
-    for atom_index in range(number_particles):
-        for bond_index in range(len(bonds)):
-            first_bonded_atom = bonds[bond_index][0]
-            second_bonded_atom = bonds[bond_index][1]
-
-            # Case where our atom has a bond
-            if atom_index == first_bonded_atom or atom_index == second_bonded_atom:
-
-                # Find atom bonded to atom_index
-                if first_bonded_atom == atom_index:
-                    bonded_atom = int(second_bonded_atom)
-                else:
-                    bonded_atom = int(first_bonded_atom)
-
-                optimal_bond_length = bonds[bond_index][2]
-                bond_strength = bonds[bond_index][3]
-
-                vector_bonded_particles = positions[atom_index] - positions[bonded_atom]
-                distance_bonded_particles = np.sqrt(sum(vector_bonded_particles * vector_bonded_particles))
-
-                bond_potential = bond_strength * ((distance_bonded_particles - optimal_bond_length) ** 2)
-
-                # Avoid counting it twice since it should also appear on the bonded atom index
-                bond_potentials[
-                    atom_index] += 0.5 * bond_potential  # # TODO To Be Removed : Just the debugging of bonds  # print(f"Atom Index : {atom_index}  >> Bonded Atom Index : {bonded_atom}  >> Potential {0.5 * bond_potential}")
-    return bond_potentials
 
 
 def compute_bond_energy_gradient_potential(positions, bonds, dimensions):
@@ -140,11 +120,6 @@ def compute_bond_energy_gradient_potential(positions, bonds, dimensions):
                 bond_gradient_potentials[atom_index] += bond_gradient_potential
 
     return bond_gradient_potentials
-
-
-def compute_angle_potentials(positions):
-    # TODO To Be Implemented
-    return 0
 
 
 def compute_angle_gradient_potential(positions, angles, dimensions):
@@ -227,28 +202,44 @@ def compute_coulomb_force(positions, charges, particle_index, molecule_indexes, 
 
     vector_norms = np.linalg.norm(vectors, axis=1)
 
-    # print(f"Particle Index {particle_index} >> Particle Charge {particle_charge}")
-    # print(f"Particle Index {particle_index} >> Standardised Particle Charges {standardised_particle_charges_per_molecule}")
-    print(*vectors, sep='\n')
-    print(vector_norms)
-    exit()
-    return 0
+    partial_force_value_vector = particle_charge * standardised_particle_charges_per_molecule * coulombs_constant * (
+            (1.0 / vector_norms) ** 3)
+
+    # Sum up all forces that apply to the charge
+    electrostatic_force = np.sum(np.transpose(np.transpose(vectors) * partial_force_value_vector), axis=0)
+
+    return electrostatic_force
 
 
 ####################################
 # End Of Computation Of Potentials #
 ####################################
 
-def update_velocity_using_forces(positions, velocities, bonds, time_step, sigma, epsilon, masses, dimensions):
+def update_velocity_using_forces(positions, velocities, bonds, angles, molecule_indexes, electrical_charges,
+                                 coulombs_constant, time_step, sigma, epsilon, masses, atom_types, dimensions):
+    number_particles = positions.shape[0]
     # Compute Forces interacting on all molecules based on leonard jones interactions
-    forces = -np.array(
-        [compute_lennard_jones_gradient_potential(positions=positions, atom_index=index, sigma=sigma, epsilon=epsilon)
-         for index in range(len(positions))])
+    forces = -np.array([compute_lennard_jones_gradient_potential(positions=positions, molecule_indexes=molecule_indexes,
+                                                                 atom_types=atom_types, atom_index=index, sigma=sigma,
+                                                                 epsilon=epsilon) for index in range(len(positions))])
 
     # Add forces emmanating from bond potentials
     bond_gradient_potentials = compute_bond_energy_gradient_potential(positions=positions, bonds=bonds,
                                                                       dimensions=dimensions)
     forces -= bond_gradient_potentials
+
+    # Add forces emmanating from bond angle potentials
+    bond_angle_potentials = compute_angle_gradient_potential(positions=positions, angles=angles, dimensions=dimensions)
+
+    forces -= bond_angle_potentials
+
+    # Add electrostatic forces
+    coulumb_forces = [
+        compute_coulomb_force(positions=positions, charges=electrical_charges, particle_index=particle_index,
+                              molecule_indexes=molecule_indexes, coulombs_constant=coulombs_constant) for particle_index
+        in range(number_particles)]
+
+    forces -= coulumb_forces
 
     accelerations = np.transpose(np.transpose(forces) / masses)
 
