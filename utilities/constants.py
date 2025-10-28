@@ -7,44 +7,34 @@ import numpy as np
 simulation_directory = "/Users/Robert/PycharmProjects/molecular-dynamics/simulations"
 
 # Simulation Global Parameters
-number_particles = 30
+number_particles = 240
 dimensions = 3
-time_step = 0.01  # timesteps in pico-seconds so 1e-12
-simulation_steps = 500
-simulation_box_size = 40  # System in Angstom
-desired_temperature = 10
+# time_step = 0.0001  # timesteps in pico-seconds so 1e-12
+time_step = 0.001  # timesteps in pico-seconds so 1e-12
+simulation_steps = 10000
+simulation_box_size = 50  # System in Angstom
+desired_temperatures = [400, 600, 800, 1000, 1200]
 # Lennard-Jones Interaction Parameters
 # For hydrogen
 # Sigma In angstrom
-lennard_jones_parameters = {
-    "epsilon": {
-        "oxygen_oxygen": 62.87,
-        "oxygen_hydrogen": 14.2723,
-        "hydrogen_hydrogen": 3.24
-    },
-    "sigma": {
-        "oxygen_oxygen": 3.1169,
-        "oxygen_hydrogen": 2.04845,
-        "hydrogen_hydrogen": 0.98
-    }
-}
+lennard_jones_parameters = {"epsilon": {"oxygen_oxygen": 62.87, "oxygen_hydrogen": 14.2723, "hydrogen_hydrogen": 3.24},
+    "sigma": {"oxygen_oxygen": 3.1169, "oxygen_hydrogen": 2.04845, "hydrogen_hydrogen": 0.98}}
 # Partical Masses in Dalton
 mass_dictionary = {"hydrogen": 1, "nitrogen": 14, "carbon": 12, "oxygen": 16}
 
 # Atome Charge Dictionary
 atome_charge_dictionary = {"water": {"oxygen": -0.82, "hydrogen": 0.41}}
 
-# TODO To Document
 # Water bond spring constant
 water_bond_spring_constant = 148000.0 / 2
 
-# Water bond length
+# Desired water bond length
 water_bond_length = 0.9611
 
-# TODO Water spring constant
+# Water angle spring constant
 water_angle_spring_constant = 35300.0 / 2
 
-# TODO Water angle
+# Desired water angle
 water_angle = 104.45 * np.pi / 180.0  # Angles in Radian
 
 # How to keep energy constant in the system to avoid energy increasing ?

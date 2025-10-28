@@ -239,7 +239,7 @@ def update_velocity_using_forces(positions, velocities, bonds, angles, molecule_
                               molecule_indexes=molecule_indexes, coulombs_constant=coulombs_constant) for particle_index
         in range(number_particles)]
 
-    forces -= coulumb_forces
+    forces += coulumb_forces
 
     accelerations = np.transpose(np.transpose(forces) / masses)
 

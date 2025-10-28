@@ -110,6 +110,40 @@ def get_positions_velocities_masses(particle_dictionary, number_particles):
     return positions, velocities, masses, particle_types, molecule_indexes, electrical_charges, atom_types
 
 
+def generate_simple_water_positions(number_of_water, simulation_box_size):
+
+    # --- Define a simple offset for the hydrogens ---
+    # We'll just place them 1.0 Angstrom away from the Oxygen on the x-axis.
+    hydrogen_offset = np.array([2.0, 0.0, 0.0])
+
+    box_dims = np.array([simulation_box_size] * 3)
+
+    # --- Pre-allocate the final positions array ---
+    total_atoms = number_of_water * 3
+    all_positions = np.zeros((total_atoms, 3))
+
+    # --- Loop to generate each molecule ---
+    for i in range(number_of_water):
+        # --- a. Generate a random position for the Oxygen ---
+        # This is a random [x, y, z] coordinate inside the box.
+        pos_o = np.random.rand(3) * box_dims
+
+        # --- b. Calculate positions for the two Hydrogens ---
+        # We add/subtract the offset and use the modulo operator (%)
+        # to apply periodic boundary conditions. This wraps the
+        # atom back into the box if it goes outside.
+        pos_h1 = (pos_o - hydrogen_offset) % box_dims
+        pos_h2 = (pos_o + hydrogen_offset) % box_dims
+
+        # --- c. Add to the main array in [H, O, H] order ---
+        start_index = i * 3
+        all_positions[start_index] = pos_h1
+        all_positions[start_index + 1] = pos_o
+        all_positions[start_index + 2] = pos_h2
+
+    return all_positions
+
+
 def get_water_bonds(number_particles, water_bond_spring_constant, bond_length):
     bonds = []
     for i in range(int(number_particles / 3)):
