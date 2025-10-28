@@ -261,16 +261,6 @@ def correct_velocities_based_on_temperature(velocities, masses, boltzman_constan
     # Correction value
     correction_value = np.sqrt(desired_temperature / current_temperature)
 
-    # # Playing around with temperature manipulation
-    # # Controlled Velocity Update -- Could be tried
-    # alpha = 0.2
-    # corrected_velocities = alpha * (correction_value * velocities) + (1 - alpha) * velocities
-    # print(100*'-')
-    # print(f"Current Temperature : {current_temperature}")
-    # average_corrected_kinetic_energy = 0.5 * sum(sum(masses * np.transpose(corrected_velocities * corrected_velocities)))
-    # print(f"Corrected Temperature : {(2 / 3) * average_corrected_kinetic_energy / boltzman_constant}")
-    # print(100 * '-')
-
     corrected_velocities = correction_value * velocities
 
     return corrected_velocities

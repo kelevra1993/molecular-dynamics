@@ -7,12 +7,12 @@ import numpy as np
 simulation_directory = "/Users/Robert/PycharmProjects/molecular-dynamics/simulations"
 
 # Simulation Global Parameters
-number_particles = 240
+number_particles = 480
 dimensions = 3
 # time_step = 0.0001  # timesteps in pico-seconds so 1e-12
 time_step = 0.001  # timesteps in pico-seconds so 1e-12
 simulation_steps = 10000
-simulation_box_size = 50  # System in Angstom
+simulation_box_size = 40  # System in Angstom
 desired_temperatures = [400, 600, 800, 1000, 1200]
 # Lennard-Jones Interaction Parameters
 # For hydrogen
