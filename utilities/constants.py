@@ -12,9 +12,9 @@ number_particles = 60
 dimensions = 3
 # time_step = 0.0001  # timesteps in pico-seconds so 1e-12
 time_step = 0.001  # timesteps in pico-seconds so 1e-12
-simulation_steps = 100
-simulation_box_size = 20  # System in Angstom
-desired_temperatures = [1300]
+simulation_steps = 10000
+simulation_box_size = 50  # System in Angstom
+desired_temperatures = [1000]
 # Lennard-Jones Interaction Parameters
 # For hydrogen
 # Sigma In angstrom

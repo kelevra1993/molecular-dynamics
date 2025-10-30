@@ -9,7 +9,8 @@ from tqdm import tqdm
 
 from utilities.utils import write_positions_to_file, define_mass_lookup_tables, get_particle_mass, get_particle_type, \
     get_atom_type, get_positions_velocities_masses, get_molecule_index, get_atome_charge, get_water_bonds, \
-    get_water_angles, generate_simple_water_positions, plot_water_velocities, print_green, print_yellow, print_red
+    get_water_angles, generate_simple_water_positions, generate_simple_water_velocities, plot_water_velocities, \
+    print_green, print_yellow, print_red
 from force_fields.functions import update_positions_and_velocities, update_velocity_using_forces, \
     correct_velocities_based_on_temperature
 from utilities.constants import number_particles, dimensions, simulation_steps, simulation_box_size, time_step, \
@@ -21,8 +22,8 @@ for desired_temperature in desired_temperatures:
     particle_dictionary = {}
     for particle_index in range(number_particles):
         particle_dictionary[str(particle_index)] = {"position": simulation_box_size * np.random.rand(1, dimensions),
-                                                    "velocity": simulation_box_size * np.random.rand(1,
-                                                                                                     dimensions) - 0.5,
+                                                    "velocity": simulation_box_size * (
+                                                                np.random.rand(1, dimensions) - 0.5),
                                                     "mass": get_particle_mass(particle_index=particle_index,
                                                                               molecule_type="water",
                                                                               mass_dictionary=mass_dictionary),
@@ -41,7 +42,10 @@ for desired_temperature in desired_temperatures:
 
     positions = generate_simple_water_positions(number_of_water=number_particles // 3,
                                                 simulation_box_size=simulation_box_size, initial_hydrogen_offset=1,
-                                                max_occupancy=0.7)
+                                                max_occupancy=0.8, distance_maximisation_steps=200,
+                                                minimum_desired_distance=5)
+    velocities = generate_simple_water_velocities(number_of_water=number_particles // 3,
+                                                  simulation_box_size=simulation_box_size)
 
     bonds = get_water_bonds(number_particles=number_particles, water_bond_spring_constant=water_bond_spring_constant,
                             bond_length=water_bond_length)
@@ -63,10 +67,10 @@ for desired_temperature in desired_temperatures:
 
         for iteration_index in tqdm(range(simulation_steps),
                                     desc=f"Running {boundary_condition}_{desired_temperature}K Simulation :"):
-            # Debug the velocities
-            print_green("Initial Velocities", add_separators=True)
-            plot_water_velocities(velocities=velocities, number_particles=number_particles,
-                                  simulation_box_size=simulation_box_size,scale=True)
+            # # Debug the velocities
+            # print_green("Initial Velocities", add_separators=True)
+            # plot_water_velocities(velocities=velocities, number_particles=number_particles,
+            #                       simulation_box_size=simulation_box_size,scale=True)
 
             # First get velocities based on potential enegies
             # currently only lennard_jones interactions
@@ -79,20 +83,20 @@ for desired_temperature in desired_temperatures:
                                                                     coulombs_constant=coulombs_constant,
                                                                     time_step=time_step, masses=masses,
                                                                     atom_types=atom_types, dimensions=dimensions)
-
-            # Debug the velocities
-            print_yellow("Velocities After Applied Forces", add_separators=True)
-            plot_water_velocities(velocities=velocities, number_particles=number_particles,
-                                  simulation_box_size=simulation_box_size,scale=True)
+            # # print(*velocities,sep="\n")
+            # # Debug the velocities
+            # print_yellow("Velocities After Applied Forces", add_separators=True)
+            # plot_water_velocities(velocities=velocities, number_particles=number_particles,
+            #                       simulation_box_size=simulation_box_size,scale=True)
 
             # Correct the velocities based on temperatures
             velocities = correct_velocities_based_on_temperature(velocities=velocities, masses=masses,
                                                                  boltzman_constant=boltzman_constant,
                                                                  desired_temperature=desired_temperature)
-            # Debug the velocities
-            print_red("Velocities After Temperature Correction", add_separators=True)
-            plot_water_velocities(velocities=velocities, number_particles=number_particles,
-                                  simulation_box_size=simulation_box_size,scale=True)
+            # # Debug the velocities
+            # print_red("Velocities After Temperature Correction", add_separators=True)
+            # plot_water_velocities(velocities=velocities, number_particles=number_particles,
+            #                       simulation_box_size=simulation_box_size,scale=True)
 
             # Update positions based on velocities
             # Also take into account boundary types in order to manage particles at the simulation boundary
@@ -103,5 +107,4 @@ for desired_temperature in desired_temperatures:
 
             write_positions_to_file(positions=positions, simulation_box_size=simulation_box_size,
                                     simulation_directory=simulation_destination, iteration_index=iteration_index,
-                                    particle_types=particle_types)
-            exit()
+                                    particle_types=particle_types)  # exit()

@@ -111,7 +111,8 @@ def get_positions_velocities_masses(particle_dictionary, number_particles):
     return positions, velocities, masses, particle_types, molecule_indexes, electrical_charges, atom_types
 
 
-def generate_simple_water_positions(number_of_water, simulation_box_size, initial_hydrogen_offset, max_occupancy):
+def generate_simple_water_positions(number_of_water, simulation_box_size, initial_hydrogen_offset, max_occupancy,
+                                    distance_maximisation_steps, minimum_desired_distance):
     target_box_size = int(max_occupancy * simulation_box_size)
     center_factor = (1 - max_occupancy) / 2
     translator_vector = center_factor * simulation_box_size * np.ones(3)
@@ -122,11 +123,36 @@ def generate_simple_water_positions(number_of_water, simulation_box_size, initia
     total_atoms = number_of_water * 3
     all_positions = np.zeros((total_atoms, 3))
 
+    allocated_oxygen_positions = []
+
     # --- Loop to generate each molecule ---
     for i in range(number_of_water):
         # --- a. Generate a random position for the Oxygen ---
         # This is a random [x, y, z] coordinate inside the box.
         oxygen_position = np.random.rand(3) * box_dimensions
+
+
+        if not allocated_oxygen_positions:
+            allocated_oxygen_positions.append(oxygen_position)
+        else:
+            least_worst_oxygen_position = {"position": [], "distance": 0}
+            for distance_step in range(distance_maximisation_steps):
+                vectors_to_atom_i = oxygen_position - allocated_oxygen_positions
+                distance_norms = np.linalg.norm(vectors_to_atom_i, axis=1)
+
+                if np.min(distance_norms) > least_worst_oxygen_position["distance"]:
+                    least_worst_oxygen_position = {"position": oxygen_position, "distance": np.min(distance_norms)}
+
+                number_of_close_oxygens = sum(x < minimum_desired_distance for x in distance_norms)
+
+                if number_of_close_oxygens:
+                    oxygen_position = np.random.rand(3) * box_dimensions
+                else:
+                    break
+                if distance_step == distance_maximisation_steps - 1:
+                    oxygen_position = least_worst_oxygen_position["position"]
+
+        allocated_oxygen_positions.append(oxygen_position)
 
         # --- b. Calculate positions for the two Hydrogens ---
         # Apply small offsets on x and y coordinates.
@@ -143,9 +169,26 @@ def generate_simple_water_positions(number_of_water, simulation_box_size, initia
 
     return all_positions
 
+def generate_simple_water_velocities(number_of_water,
+                                    simulation_box_size):
 
-import numpy as np
+    # --- Pre-allocate the final positions array ---
+    total_atoms = number_of_water * 3
+    all_velocities = np.zeros((total_atoms, 3))
 
+    # --- Loop to generate each molecule ---
+    for i in range(number_of_water):
+        # --- a. Generate a random velocity for the Oxygen ---
+        # This is a random [x, y, z] coordinate inside the box.
+        oxygen_velocity = np.random.rand(3) * simulation_box_size
+
+        # --- b. Upate velocities for the molecule ---
+        start_index = i * 3
+        all_velocities[start_index] = oxygen_velocity
+        all_velocities[start_index + 1] = oxygen_velocity
+        all_velocities[start_index + 2] = oxygen_velocity
+
+    return all_velocities
 
 def scale_to_0_100(vector):
     vector = np.array(vector, dtype=float)
