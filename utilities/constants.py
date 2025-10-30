@@ -7,18 +7,19 @@ import numpy as np
 simulation_directory = "/Users/Robert/PycharmProjects/molecular-dynamics/simulations"
 
 # Simulation Global Parameters
-number_particles = 480
+number_particles = 60
+# todo work on removing this to always work with 3 dimensions
 dimensions = 3
 # time_step = 0.0001  # timesteps in pico-seconds so 1e-12
 time_step = 0.001  # timesteps in pico-seconds so 1e-12
-simulation_steps = 10000
-simulation_box_size = 40  # System in Angstom
-desired_temperatures = [400, 600, 800, 1000, 1200]
+simulation_steps = 100
+simulation_box_size = 20  # System in Angstom
+desired_temperatures = [1300]
 # Lennard-Jones Interaction Parameters
 # For hydrogen
 # Sigma In angstrom
 lennard_jones_parameters = {"epsilon": {"oxygen_oxygen": 62.87, "oxygen_hydrogen": 14.2723, "hydrogen_hydrogen": 3.24},
-    "sigma": {"oxygen_oxygen": 3.1169, "oxygen_hydrogen": 2.04845, "hydrogen_hydrogen": 0.98}}
+                            "sigma": {"oxygen_oxygen": 3.1169, "oxygen_hydrogen": 2.04845, "hydrogen_hydrogen": 0.98}}
 # Partical Masses in Dalton
 mass_dictionary = {"hydrogen": 1, "nitrogen": 14, "carbon": 12, "oxygen": 16}
 
@@ -42,10 +43,14 @@ water_angle = 104.45 * np.pi / 180.0  # Angles in Radian
 # In order to keep everything simple we will be setting boltzman constant Kb to Angstroms, Daltons, Pico-seconds
 
 # Original Kb
-boltzman_constant = 1.380649E-23  # In SI, this is equivalent to [m2] [kg] [s-2] [K-1]
-boltzman_constant = boltzman_constant * 6.02228E26  # Turning kg -> Da since we know 1Da = 1,6605E-27 Kg so [m2] [Da] [s-2] [K-1]
-boltzman_constant = boltzman_constant * 1E20  # Turning m -> Angstrom2(A)  sine we know 1Da = 1,6605E-27 Kg so [A^2] [Da] [s-2] [K-1]
-boltzman_constant = boltzman_constant / 1E24  # Turning seconds -> picosends(A^2)  sine we know 1Da = 1,6605E-27 Kg so [A^2] [Da] [s-2] [K-1]  # Kb = 0.8314654859720001
+# In SI, this is equivalent to [m2] [kg] [s-2] [K-1]
+boltzman_constant = 1.380649E-23
+# Turning kg -> Da since we know 1Da = 1,6605E-27 Kg so [m2] [Da] [s-2] [K-1]
+boltzman_constant = boltzman_constant * 6.02228E26
+# Turning m -> Angstrom2(A)  sine we know 1Da = 1,6605E-27 Kg so [A^2] [Da] [s-2] [K-1]
+boltzman_constant = boltzman_constant * 1E20
+# Turning seconds -> picosends(A^2)  sine we know 1Da = 1,6605E-27 Kg so [A^2] [Da] [s-2] [K-1]  # Kb = 0.8314654859720001
+boltzman_constant = boltzman_constant / 1E24
 
 # Coulombs constant
 avagadros_constant_g_wise = 6.02228E26  # Avogardos constant x 1000 (g->kg)

@@ -4,6 +4,7 @@
 import os
 import json
 import numpy as np
+import plotext as plt
 
 
 # todo to be removed
@@ -110,13 +111,12 @@ def get_positions_velocities_masses(particle_dictionary, number_particles):
     return positions, velocities, masses, particle_types, molecule_indexes, electrical_charges, atom_types
 
 
-def generate_simple_water_positions(number_of_water, simulation_box_size):
+def generate_simple_water_positions(number_of_water, simulation_box_size, initial_hydrogen_offset, max_occupancy):
+    target_box_size = int(max_occupancy * simulation_box_size)
+    center_factor = (1 - max_occupancy) / 2
+    translator_vector = center_factor * simulation_box_size * np.ones(3)
 
-    # --- Define a simple offset for the hydrogens ---
-    # We'll just place them 1.0 Angstrom away from the Oxygen on the x-axis.
-    hydrogen_offset = np.array([2.0, 0.0, 0.0])
-
-    box_dims = np.array([simulation_box_size] * 3)
+    box_dimensions = np.array([target_box_size] * 3)
 
     # --- Pre-allocate the final positions array ---
     total_atoms = number_of_water * 3
@@ -126,22 +126,60 @@ def generate_simple_water_positions(number_of_water, simulation_box_size):
     for i in range(number_of_water):
         # --- a. Generate a random position for the Oxygen ---
         # This is a random [x, y, z] coordinate inside the box.
-        pos_o = np.random.rand(3) * box_dims
+        oxygen_position = np.random.rand(3) * box_dimensions
 
         # --- b. Calculate positions for the two Hydrogens ---
-        # We add/subtract the offset and use the modulo operator (%)
-        # to apply periodic boundary conditions. This wraps the
-        # atom back into the box if it goes outside.
-        pos_h1 = (pos_o - hydrogen_offset) % box_dims
-        pos_h2 = (pos_o + hydrogen_offset) % box_dims
+        # Apply small offsets on x and y coordinates.
+        hydrogen1_position = oxygen_position + np.array([initial_hydrogen_offset, 0.0, 0.0])
+        hydrogen2_position = oxygen_position + np.array([0.0, initial_hydrogen_offset, 0.0])
 
         # --- c. Add to the main array in [H, O, H] order ---
+        # Add correction factor to move them to the center of the simulation box
+
         start_index = i * 3
-        all_positions[start_index] = pos_h1
-        all_positions[start_index + 1] = pos_o
-        all_positions[start_index + 2] = pos_h2
+        all_positions[start_index] = hydrogen1_position + translator_vector
+        all_positions[start_index + 1] = oxygen_position + translator_vector
+        all_positions[start_index + 2] = hydrogen2_position + translator_vector
 
     return all_positions
+
+
+import numpy as np
+
+
+def scale_to_0_100(vector):
+    vector = np.array(vector, dtype=float)
+    v_min, v_max = vector.min(), vector.max()
+    if v_max == v_min:
+        return np.zeros_like(vector)  # avoid division by zero if all values are equal
+    return 100 * (vector - v_min) / (v_max - v_min)
+
+
+def plot_water_velocities(velocities, number_particles, simulation_box_size, scale):
+    velocity_norms = np.linalg.norm(velocities, axis=1)
+    if scale:
+        velocity_norms = scale_to_0_100(vector=velocity_norms)
+        simulation_box_size = 20
+
+    oxygen_velocities = [velocity_norms[v] for v in range(number_particles) if v % 3 == 1]
+    hydrogen_velocities = [velocity_norms[v] for v in range(number_particles) if v % 3 != 1]
+
+    bins = np.linspace(velocity_norms.min(), velocity_norms.max(), simulation_box_size // 2)
+    bins = np.round(bins,0)
+
+    x = bins[:-1]
+
+    oxygen_counts, _ = np.histogram(oxygen_velocities, bins=bins)
+    hyrdogen_counts, _ = np.histogram(hydrogen_velocities, bins=bins)
+
+    plt.bar(x - 0.5, oxygen_counts, width=0.1, label="Oxygen")
+    plt.bar(x + 0.5, hyrdogen_counts, width=0.1, label="Hydrogen")
+    # plt.hist(oxygen_velocities,bins=simulation_box_size)
+    # plt.hist(hydrogen_velocities,bins=simulation_box_size)
+    plt.plotsize(width=500)
+
+    plt.show()
+    plt.clf()
 
 
 def get_water_bonds(number_particles, water_bond_spring_constant, bond_length):
