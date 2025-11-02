@@ -56,7 +56,7 @@ for desired_temperature in desired_temperatures:
 
     for boundary_condition in boundary_conditions:
 
-        simulation_destination = os.path.join(simulation_directory, f"{boundary_condition}_{desired_temperature}K")
+        simulation_destination = os.path.join(simulation_directory, f"{boundary_condition}_{desired_temperature}K_{time_step}")
 
         # Clear the directory before running the simulation
         if os.path.exists(simulation_destination):

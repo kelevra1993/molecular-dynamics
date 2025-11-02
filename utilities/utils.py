@@ -156,8 +156,38 @@ def generate_simple_water_positions(number_of_water, simulation_box_size, initia
 
         # --- b. Calculate positions for the two Hydrogens ---
         # Apply small offsets on x and y coordinates.
-        hydrogen1_position = oxygen_position + np.array([initial_hydrogen_offset, 0.0, 0.0])
-        hydrogen2_position = oxygen_position + np.array([0.0, initial_hydrogen_offset, 0.0])
+        # Generate one random angle (theta) from 0 to 2*pi for the rotation
+        random_angle = np.random.rand() * 2.0 * np.pi
+
+        # Pre-calculate the sine and cosine of this angle
+        cos_theta = np.cos(random_angle)
+        sin_theta = np.sin(random_angle)
+
+        # Compute the new rotated offset for H1
+        # The original offset was [offset, 0, 0]
+        # Applying rotation matrix R_z(theta):
+        # x' = x*cos(t) - y*sin(t) = initial_hydrogen_offset * cos_theta
+        # y' = x*sin(t) + y*cos(t) = initial_hydrogen_offset * sin_theta
+        h1_offset = np.array([
+            initial_hydrogen_offset * cos_theta,
+            initial_hydrogen_offset * sin_theta,
+            0.0
+        ])
+
+        # Compute the new rotated offset for H2
+        # The original offset was [0, offset, 0]
+        # Applying rotation matrix R_z(theta):
+        # x' = x*cos(t) - y*sin(t) = -initial_hydrogen_offset * sin_theta
+        # y' = x*sin(t) + y*cos(t) =  initial_hydrogen_offset * cos_theta
+        h2_offset = np.array([
+            -initial_hydrogen_offset * sin_theta,
+            initial_hydrogen_offset * cos_theta,
+            0.0
+        ])
+
+        # # Apply the new rotated offsets to the oxygen's position
+        hydrogen1_position = oxygen_position + h1_offset
+        hydrogen2_position = oxygen_position + h2_offset
 
         # --- c. Add to the main array in [H, O, H] order ---
         # Add correction factor to move them to the center of the simulation box
