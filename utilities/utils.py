@@ -228,7 +228,12 @@ def get_target_water_velocity_distributions(number_particles, masses, mass_dicti
 
     # TODO document what is in this dictionary
     # TODO CORRECT FOR THE VELOCITY DIVERGENCE
-    target_velocity_distributions = {"hydrogen": target_hydrogen_speed_norms, "oxygen": target_oxygen_speed_norms}
+    # Sorted target norms so that we do not have to do it at each iteration
+    sorted_target_hydrogen_speeds_norms = np.sort(target_hydrogen_speed_norms)
+    sorted_target_oxygen_speeds_norms = np.sort(target_oxygen_speed_norms)
+
+    target_velocity_distributions = {"hydrogen": sorted_target_hydrogen_speeds_norms,
+                                     "oxygen": sorted_target_oxygen_speeds_norms}
 
     return target_velocity_distributions
 

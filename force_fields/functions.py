@@ -222,26 +222,7 @@ def update_velocity_using_forces(positions, velocities, bonds, angles, molecule_
     forces = -np.array([compute_lennard_jones_gradient_potential(positions=positions, molecule_indexes=molecule_indexes,
                                                                  atom_types=atom_types, atom_index=index, sigma=sigma,
                                                                  epsilon=epsilon) for index in range(len(positions))])
-    # forces_norms = np.linalg.norm(forces, axis=1)
-    #
-    # threshold_potential = 10
-    # for index in range(number_particles):
-    #     vectors_to_atom_i = positions[index] - positions
-    #     # print(vectors_to_atom_i)
-    #     distance_norms = np.linalg.norm(vectors_to_atom_i, axis=1)
-    #     sorted_index = np.argsort(distance_norms)
-    #     if forces_norms[index]<threshold_potential:
-    #         continue
-    #     print(100 * "-")
-    #     print(f"Force For Index {atom_types[index]} {index:03} Is : {np.round(forces_norms[index], 4)}")
-    #     print(f"The Closest Atoms Are At Distance :")
-    #     number_closest = 6
-    #     for i in range(3, number_closest):
-    #         print(f"Closest {i} > {round(distance_norms[sorted_index[i]], 2)} From Particle {sorted_index[i]}"
-    #               f" Which is an {atom_types[sorted_index[i]]}")
-    #     print(
-    #         f"The Average Distance Of Closest {number_closest} Particles Is : "
-    #         f"{np.round(np.mean(distance_norms[sorted_index[3:number_closest]]),4)}")
+
 
     # Add forces emmanating from bond potentials
     bond_gradient_potentials = compute_bond_energy_gradient_potential(positions=positions, bonds=bonds,
@@ -283,10 +264,6 @@ def correct_velocities_based_on_temperature(velocities, masses, boltzman_constan
 
     corrected_velocities = correction_value * velocities
 
-    kinetic_energy = 0.5 * sum(sum(masses * np.transpose(corrected_velocities * corrected_velocities)))
-    average_kinetic_energy = kinetic_energy / number_particles
-    corrected_temperature = (2 / 3) * average_kinetic_energy / boltzman_constant
-    print(f"Corrected Temperature : {corrected_temperature}")
     return corrected_velocities
 
 
@@ -305,21 +282,21 @@ def correct_velocities_based_on_target_velocity_distributions(velocities, mass_d
     current_oxygen_speed_norms = np.linalg.norm(oxygen_velocities, axis=1)
     current_oxygen_directions = oxygen_velocities / current_oxygen_speed_norms.reshape(-1, 1)
 
-    # Sorted Target Norms And Get Current Ranks
-    sorted_target_hydrogen_speeds_norms = np.sort(target_velocity_distributions["hydrogen"])
-    sorted_target_oxygen_speeds_norms = np.sort(target_velocity_distributions["oxygen"])
+    target_hydrogen_speeds_norms = target_velocity_distributions["hydrogen"]
+    target_oxygen_speeds_norms = target_velocity_distributions["oxygen"]
 
-    current_hydrogen_ranks = np.argsort(current_hydrogen_speed_norms)
-    current_oxygen_ranks = np.argsort(current_oxygen_speed_norms)
+    # Get ranks of target particle velocities (they had already been sorted)
+    current_hydrogen_ranks = np.argsort(target_hydrogen_speeds_norms)
+    current_oxygen_ranks = np.argsort(target_oxygen_speeds_norms)
 
     # Equalize by mapping distributions
     new_hydrogen_speed_norms = np.zeros(len(hydrogen_indices))
     for target_index, hydrogen_index in enumerate(current_hydrogen_ranks):
-        new_hydrogen_speed_norms[hydrogen_index] = sorted_target_hydrogen_speeds_norms[target_index]
+        new_hydrogen_speed_norms[hydrogen_index] = target_hydrogen_speeds_norms[target_index]
 
     new_oxygen_speed_norms = np.zeros(len(oxygen_indices))
     for target_index, oxygen_index in enumerate(current_oxygen_ranks):
-        new_oxygen_speed_norms[oxygen_index] = sorted_target_oxygen_speeds_norms[target_index]
+        new_oxygen_speed_norms[oxygen_index] = target_oxygen_speeds_norms[target_index]
 
     corrected_hydrogen_velocities = current_hydrogen_directions * new_hydrogen_speed_norms.reshape(-1, 1)
     corrected_oxygen_velocities = current_oxygen_directions * new_oxygen_speed_norms.reshape(-1, 1)
@@ -327,6 +304,7 @@ def correct_velocities_based_on_target_velocity_distributions(velocities, mass_d
     corrected_velocities = merge_velocities(hydrogen_velocities=corrected_hydrogen_velocities,
                                             oxygen_velocities=corrected_oxygen_velocities,
                                             number_particles=number_particles)
+
 
     return corrected_velocities
 
