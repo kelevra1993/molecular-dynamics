@@ -11,8 +11,8 @@ number_particles = 60
 # todo work on removing this to always work with 3 dimensions
 dimensions = 3
 # time_step = 0.0001  # timesteps in pico-seconds so 1e-12
-time_step = 0.001  # timesteps in pico-seconds so 1e-12
-simulation_steps = 10000
+time_step = 0.0001  # timesteps in pico-seconds so 1e-12
+simulation_steps = 50000
 simulation_box_size = 50  # System in Angstom
 desired_temperatures = [1000]
 # Lennard-Jones Interaction Parameters
@@ -27,13 +27,17 @@ mass_dictionary = {"hydrogen": 1, "nitrogen": 14, "carbon": 12, "oxygen": 16}
 atome_charge_dictionary = {"water": {"oxygen": -0.82, "hydrogen": 0.41}}
 
 # Water bond spring constant
-water_bond_spring_constant = 148000.0 / 2
+# Got from TIP3P/F
+# 450 000 kJ/mol/(nm2) > Da·Å²·ps⁻² (roughly 1 to 1)
+water_bond_spring_constant = 450000.0
 
 # Desired water bond length
-water_bond_length = 0.9611
+water_bond_length = 0.9572
 
 # Water angle spring constant
-water_angle_spring_constant = 35300.0 / 2
+# Got from TIP3P/F
+# 35 300 kJ/mol/rad² > Da·Å²·rad⁻²
+water_angle_spring_constant = 3530000.0
 
 # Desired water angle
 water_angle = 104.45 * np.pi / 180.0  # Angles in Radian
