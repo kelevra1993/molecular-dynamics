@@ -180,7 +180,7 @@ def generate_simple_water_velocities(number_of_water,
     for i in range(number_of_water):
         # --- a. Generate a random velocity for the Oxygen ---
         # This is a random [x, y, z] coordinate inside the box.
-        oxygen_velocity = np.random.rand(3) * simulation_box_size
+        oxygen_velocity = (np.random.rand(3)-0.5) * simulation_box_size
 
         # --- b. Upate velocities for the molecule ---
         start_index = i * 3
