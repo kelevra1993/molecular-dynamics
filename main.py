@@ -63,8 +63,7 @@ for desired_temperature in desired_temperatures:
 
     for boundary_condition in boundary_conditions:
 
-        simulation_destination = os.path.join(simulation_directory,
-                                              f"{boundary_condition}_{desired_temperature}K_{time_step}")
+        simulation_destination = os.path.join(simulation_directory, f"{boundary_condition}_{desired_temperature}K")
 
         # Clear the directory before running the simulation
         if os.path.exists(simulation_destination):
@@ -87,11 +86,17 @@ for desired_temperature in desired_temperatures:
                                                                     time_step=time_step, masses=masses,
                                                                     atom_types=atom_types, dimensions=dimensions)
 
-            # Correct the velocities based on desired temperature through target velocities
-            velocities = correct_velocities_based_on_target_velocity_distributions(velocities=velocities,
-                                                                                   mass_dictionary=mass_dictionary,
-                                                                                   boltzman_constant=boltzman_constant,
-                                                                                   target_velocity_distributions=target_velocity_distributions)
+            if iteration_index % 25 == 0:
+                # Correct the velocities based on desired temperature through target velocities
+                velocities = correct_velocities_based_on_target_velocity_distributions(velocities=velocities,
+                                                                                       mass_dictionary=mass_dictionary,
+                                                                                       boltzman_constant=boltzman_constant,
+                                                                                       target_velocity_distributions=target_velocity_distributions)
+            else:
+                # Correct velocities based on temperature
+                velocities = correct_velocities_based_on_temperature(velocities=velocities, masses=masses,
+                                                                     boltzman_constant=boltzman_constant,
+                                                                     desired_temperature=desired_temperature)
 
             # Update positions based on velocities
             # Also take into account boundary types in order to manage particles at the simulation boundary
