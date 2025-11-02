@@ -11,7 +11,7 @@ number_particles = 60
 # todo work on removing this to always work with 3 dimensions
 dimensions = 3
 # time_step = 0.0001  # timesteps in pico-seconds so 1e-12
-time_step = 0.0001  # timesteps in pico-seconds so 1e-12
+time_step = 0.001  # timesteps in pico-seconds so 1e-12
 simulation_steps = 50000
 simulation_box_size = 50  # System in Angstom
 desired_temperatures = [1000]

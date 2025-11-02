@@ -9,10 +9,11 @@ from tqdm import tqdm
 
 from utilities.utils import write_positions_to_file, define_mass_lookup_tables, get_particle_mass, get_particle_type, \
     get_atom_type, get_positions_velocities_masses, get_molecule_index, get_atome_charge, get_water_bonds, \
-    get_water_angles, generate_simple_water_positions, generate_simple_water_velocities, plot_water_velocities, \
-    print_green, print_yellow, print_red
+    get_water_angles, generate_simple_water_positions, generate_simple_water_velocities, \
+    get_target_water_velocity_distributions, plot_water_velocities, print_green, print_yellow, print_red
 from force_fields.functions import update_positions_and_velocities, update_velocity_using_forces, \
-    correct_velocities_based_on_temperature
+    correct_velocities_based_on_temperature, correct_velocities_based_on_target_velocity_distributions, \
+    compute_temperature
 from utilities.constants import number_particles, dimensions, simulation_steps, simulation_box_size, time_step, \
     simulation_directory, lennard_jones_parameters, mass_dictionary, boltzman_constant, desired_temperatures, \
     water_bond_spring_constant, water_bond_length, water_angle_spring_constant, water_angle, atome_charge_dictionary, \
@@ -23,7 +24,7 @@ for desired_temperature in desired_temperatures:
     for particle_index in range(number_particles):
         particle_dictionary[str(particle_index)] = {"position": simulation_box_size * np.random.rand(1, dimensions),
                                                     "velocity": simulation_box_size * (
-                                                                np.random.rand(1, dimensions) - 0.5),
+                                                            np.random.rand(1, dimensions) - 0.5),
                                                     "mass": get_particle_mass(particle_index=particle_index,
                                                                               molecule_type="water",
                                                                               mass_dictionary=mass_dictionary),
@@ -47,6 +48,12 @@ for desired_temperature in desired_temperatures:
     velocities = generate_simple_water_velocities(number_of_water=number_particles // 3,
                                                   simulation_box_size=simulation_box_size)
 
+    target_velocity_distributions = get_target_water_velocity_distributions(number_particles=number_particles,
+                                                                            masses=masses,
+                                                                            mass_dictionary=mass_dictionary,
+                                                                            boltzman_constant=boltzman_constant,
+                                                                            desired_temperature=1000)
+
     bonds = get_water_bonds(number_particles=number_particles, water_bond_spring_constant=water_bond_spring_constant,
                             bond_length=water_bond_length)
     angles = get_water_angles(number_particles=number_particles,
@@ -56,7 +63,8 @@ for desired_temperature in desired_temperatures:
 
     for boundary_condition in boundary_conditions:
 
-        simulation_destination = os.path.join(simulation_directory, f"{boundary_condition}_{desired_temperature}K_{time_step}")
+        simulation_destination = os.path.join(simulation_directory,
+                                              f"{boundary_condition}_{desired_temperature}K_{time_step}")
 
         # Clear the directory before running the simulation
         if os.path.exists(simulation_destination):
@@ -88,11 +96,26 @@ for desired_temperature in desired_temperatures:
             # print_yellow("Velocities After Applied Forces", add_separators=True)
             # plot_water_velocities(velocities=velocities, number_particles=number_particles,
             #                       simulation_box_size=simulation_box_size,scale=True)
+            # compute_temperature(velocities=velocities, mass_dictionary=mass_dictionary,
+            #                     message_description="Current Temperature", boltzman_constant=boltzman_constant)
 
-            # Correct the velocities based on temperatures
-            velocities = correct_velocities_based_on_temperature(velocities=velocities, masses=masses,
-                                                                 boltzman_constant=boltzman_constant,
-                                                                 desired_temperature=desired_temperature)
+            # # Correct the velocities based on temperatures
+            # temperature_velocities = correct_velocities_based_on_temperature(velocities=velocities, masses=masses,
+            #                                                                  boltzman_constant=boltzman_constant,
+            #                                                                  desired_temperature=desired_temperature)
+            # compute_temperature(velocities=temperature_velocities, mass_dictionary=mass_dictionary,
+            #                     message_description="Temperature Corrected Temperature",
+            #                     boltzman_constant=boltzman_constant)
+
+            velocities = correct_velocities_based_on_target_velocity_distributions(velocities=velocities,
+                                                                                   mass_dictionary=mass_dictionary,
+                                                                                   boltzman_constant=boltzman_constant,
+                                                                                   target_velocity_distributions=target_velocity_distributions)
+
+            # compute_temperature(velocities=velocities, mass_dictionary=mass_dictionary,
+            #                     message_description="Target Velocity Corrected Temperature",
+            #                     boltzman_constant=boltzman_constant)
+
             # # Debug the velocities
             # print_red("Velocities After Temperature Correction", add_separators=True)
             # plot_water_velocities(velocities=velocities, number_particles=number_particles,

@@ -280,11 +280,89 @@ def correct_velocities_based_on_temperature(velocities, masses, boltzman_constan
 
     # Correction value
     correction_value = np.sqrt(desired_temperature / current_temperature)
-    alpha = 0.95
 
-    corrected_velocities = (alpha * correction_value * velocities) +(1-alpha)*velocities
+    corrected_velocities = correction_value * velocities
+
+    kinetic_energy = 0.5 * sum(sum(masses * np.transpose(corrected_velocities * corrected_velocities)))
+    average_kinetic_energy = kinetic_energy / number_particles
+    corrected_temperature = (2 / 3) * average_kinetic_energy / boltzman_constant
+    print(f"Corrected Temperature : {corrected_temperature}")
+    return corrected_velocities
+
+
+def correct_velocities_based_on_target_velocity_distributions(velocities, mass_dictionary, boltzman_constant,
+                                                              target_velocity_distributions):
+    hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
+    oxygen_indices = [index for index in range(number_particles) if index % 3 == 1]
+
+    hydrogen_velocities = velocities[hydrogen_indices]
+    oxygen_velocities = velocities[oxygen_indices]
+
+    # Get particle speed and normalize them
+    current_hydrogen_speed_norms = np.linalg.norm(hydrogen_velocities, axis=1)
+    current_hydrogen_directions = hydrogen_velocities / current_hydrogen_speed_norms.reshape(-1, 1)
+
+    current_oxygen_speed_norms = np.linalg.norm(oxygen_velocities, axis=1)
+    current_oxygen_directions = oxygen_velocities / current_oxygen_speed_norms.reshape(-1, 1)
+
+    # Sorted Target Norms And Get Current Ranks
+    sorted_target_hydrogen_speeds_norms = np.sort(target_velocity_distributions["hydrogen"])
+    sorted_target_oxygen_speeds_norms = np.sort(target_velocity_distributions["oxygen"])
+
+    current_hydrogen_ranks = np.argsort(current_hydrogen_speed_norms)
+    current_oxygen_ranks = np.argsort(current_oxygen_speed_norms)
+
+    # Equalize by mapping distributions
+    new_hydrogen_speed_norms = np.zeros(len(hydrogen_indices))
+    for target_index, hydrogen_index in enumerate(current_hydrogen_ranks):
+        new_hydrogen_speed_norms[hydrogen_index] = sorted_target_hydrogen_speeds_norms[target_index]
+
+    new_oxygen_speed_norms = np.zeros(len(oxygen_indices))
+    for target_index, oxygen_index in enumerate(current_oxygen_ranks):
+        new_oxygen_speed_norms[oxygen_index] = sorted_target_oxygen_speeds_norms[target_index]
+
+    corrected_hydrogen_velocities = current_hydrogen_directions * new_hydrogen_speed_norms.reshape(-1, 1)
+    corrected_oxygen_velocities = current_oxygen_directions * new_oxygen_speed_norms.reshape(-1, 1)
+
+    corrected_velocities = merge_velocities(hydrogen_velocities=corrected_hydrogen_velocities,
+                                            oxygen_velocities=corrected_oxygen_velocities,
+                                            number_particles=number_particles)
 
     return corrected_velocities
+
+
+def merge_velocities(hydrogen_velocities, oxygen_velocities, number_particles):
+    hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
+    oxygen_indices = [index for index in range(number_particles) if index % 3 == 1]
+    velocities = np.zeros((number_particles, 3))
+
+    for index, hydrogen_index in enumerate(hydrogen_indices):
+        velocities[hydrogen_index] = hydrogen_velocities[index]
+
+    for index, oxygen_index in enumerate(oxygen_indices):
+        velocities[oxygen_index] = oxygen_velocities[index]
+
+    return velocities
+
+
+def compute_temperature(velocities, mass_dictionary, message_description, boltzman_constant):
+    number_particles = len(velocities)
+
+    hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
+    oxygen_indices = [index for index in range(number_particles) if index % 3 == 1]
+
+    hydrogen_velocities = velocities[hydrogen_indices]
+    oxygen_velocities = velocities[oxygen_indices]
+
+    kinetic_hydrogen_energy = 0.5 * sum(
+        sum(mass_dictionary["hydrogen"] * np.transpose(hydrogen_velocities * hydrogen_velocities)))
+    kinetic_oxygen_energy = 0.5 * sum(
+        sum(mass_dictionary["oxygen"] * np.transpose(oxygen_velocities * oxygen_velocities)))
+    average_kinetic_energy = (kinetic_hydrogen_energy + kinetic_oxygen_energy) / number_particles
+
+    # Get current temperature of the system and move it back to desired temperature
+    current_temperature = (2 / 3) * average_kinetic_energy / boltzman_constant
+    print(f"{message_description} : {current_temperature}")
 
 
 def update_positions_and_velocities(positions, velocities, time_step, simulation_box_size, boundary_conditions):

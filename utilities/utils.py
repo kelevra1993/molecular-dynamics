@@ -131,7 +131,6 @@ def generate_simple_water_positions(number_of_water, simulation_box_size, initia
         # This is a random [x, y, z] coordinate inside the box.
         oxygen_position = np.random.rand(3) * box_dimensions
 
-
         if not allocated_oxygen_positions:
             allocated_oxygen_positions.append(oxygen_position)
         else:
@@ -168,22 +167,14 @@ def generate_simple_water_positions(number_of_water, simulation_box_size, initia
         # Applying rotation matrix R_z(theta):
         # x' = x*cos(t) - y*sin(t) = initial_hydrogen_offset * cos_theta
         # y' = x*sin(t) + y*cos(t) = initial_hydrogen_offset * sin_theta
-        h1_offset = np.array([
-            initial_hydrogen_offset * cos_theta,
-            initial_hydrogen_offset * sin_theta,
-            0.0
-        ])
+        h1_offset = np.array([initial_hydrogen_offset * cos_theta, initial_hydrogen_offset * sin_theta, 0.0])
 
         # Compute the new rotated offset for H2
         # The original offset was [0, offset, 0]
         # Applying rotation matrix R_z(theta):
         # x' = x*cos(t) - y*sin(t) = -initial_hydrogen_offset * sin_theta
         # y' = x*sin(t) + y*cos(t) =  initial_hydrogen_offset * cos_theta
-        h2_offset = np.array([
-            -initial_hydrogen_offset * sin_theta,
-            initial_hydrogen_offset * cos_theta,
-            0.0
-        ])
+        h2_offset = np.array([-initial_hydrogen_offset * sin_theta, initial_hydrogen_offset * cos_theta, 0.0])
 
         # # Apply the new rotated offsets to the oxygen's position
         hydrogen1_position = oxygen_position + h1_offset
@@ -199,9 +190,8 @@ def generate_simple_water_positions(number_of_water, simulation_box_size, initia
 
     return all_positions
 
-def generate_simple_water_velocities(number_of_water,
-                                    simulation_box_size):
 
+def generate_simple_water_velocities(number_of_water, simulation_box_size):
     # --- Pre-allocate the final positions array ---
     total_atoms = number_of_water * 3
     all_velocities = np.zeros((total_atoms, 3))
@@ -210,7 +200,7 @@ def generate_simple_water_velocities(number_of_water,
     for i in range(number_of_water):
         # --- a. Generate a random velocity for the Oxygen ---
         # This is a random [x, y, z] coordinate inside the box.
-        oxygen_velocity = (np.random.rand(3)-0.5) * simulation_box_size
+        oxygen_velocity = (np.random.rand(3) - 0.5) * simulation_box_size
 
         # --- b. Upate velocities for the molecule ---
         start_index = i * 3
@@ -219,6 +209,46 @@ def generate_simple_water_velocities(number_of_water,
         all_velocities[start_index + 2] = oxygen_velocity
 
     return all_velocities
+
+
+def get_target_water_velocity_distributions(number_particles, masses, mass_dictionary, boltzman_constant,
+                                            desired_temperature):
+    hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
+    oxygen_indices = [index for index in range(number_particles) if index % 3 == 1]
+
+    # Todo document how we get this sigma for better comprehension
+    sigma_hydrogen = np.sqrt(boltzman_constant * desired_temperature / mass_dictionary["hydrogen"])
+    ideal_hydrogen_velocities = np.random.randn(len(hydrogen_indices), 3) * sigma_hydrogen
+    target_hydrogen_speed_norms = np.linalg.norm(ideal_hydrogen_velocities, axis=1)
+
+    # Todo document how we get this sigma for better comprehension
+    sigma_oxygen = np.sqrt(boltzman_constant * desired_temperature / mass_dictionary["oxygen"])
+    ideal_oxygen_velocities = np.random.randn(len(oxygen_indices), 3) * sigma_oxygen
+    target_oxygen_speed_norms = np.linalg.norm(ideal_oxygen_velocities, axis=1)
+
+    # TODO document what is in this dictionary
+    # TODO CORRECT FOR THE VELOCITY DIVERGENCE
+    target_velocity_distributions = {"hydrogen": target_hydrogen_speed_norms, "oxygen": target_oxygen_speed_norms}
+
+    return target_velocity_distributions
+
+
+# TODO TO BE REWRITTEN
+def center_velocities(velocities, masses):
+    # Get weighted momentum by mass
+    all_momenta = velocities * masses.reshape(-1, 1)
+
+    # Sum all momentum vectors together (sum over axis 0)
+    total_momentum = np.sum(all_momenta, axis=0)
+
+    # Divide by sum of masses to get avereage center of mass velocity
+    center_of_mass_velocity = total_momentum / np.sum(masses)
+
+    # Correct the velocities
+    centered_velocities = velocities - center_of_mass_velocity
+
+    return centered_velocities
+
 
 def scale_to_0_100(vector):
     vector = np.array(vector, dtype=float)
@@ -238,7 +268,7 @@ def plot_water_velocities(velocities, number_particles, simulation_box_size, sca
     hydrogen_velocities = [velocity_norms[v] for v in range(number_particles) if v % 3 != 1]
 
     bins = np.linspace(velocity_norms.min(), velocity_norms.max(), simulation_box_size // 2)
-    bins = np.round(bins,0)
+    bins = np.round(bins, 0)
 
     x = bins[:-1]
 
