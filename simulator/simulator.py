@@ -46,7 +46,6 @@ class Simulator:
 
         self.target_velocity_distributions = get_target_water_velocity_distributions(
             number_particles=self.number_water_molecules * 3,
-            masses=self.masses,
             mass_dictionary=self.mass_dictionary,
             boltzman_constant=self.boltzman_constant,
             desired_temperature=self.desired_temperature)

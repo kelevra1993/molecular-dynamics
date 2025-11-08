@@ -1,5 +1,6 @@
 import os
 import json
+import yaml
 import numpy as np
 from typing import Dict, Any
 
@@ -204,3 +205,17 @@ def read_json(file_path: str) -> dict:
 
     with open(file_path) as file:
         return json.load(file)
+
+
+def load_yaml_configuration(file_path: str) -> dict:
+    """
+    Reads a YAML file and returns its contents as a dictionary.
+
+    Args:
+        file_path (str): The path to the YAML file to be read.
+
+    Returns:
+        dict: The contents of the YAML file as a Python dictionary.
+    """
+    with open(file_path, 'r') as file:
+        return yaml.safe_load(file)
