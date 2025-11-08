@@ -62,6 +62,8 @@ class Simulator:
         self.simulation_destination = os.path.join(self.simulation_directory,
                                                    f"{self.boundary_condition}_{self.desired_temperature}K")
 
+        print(f"Simulations Will Be Stored Under The Folder : {self.simulation_destination}")
+
         if os.path.exists(self.simulation_destination):
             shutil.rmtree(self.simulation_destination)
         os.makedirs(self.simulation_destination, exist_ok=True)
