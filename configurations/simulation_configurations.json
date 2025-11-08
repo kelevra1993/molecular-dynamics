@@ -1,5 +1,5 @@
 {
-  "simulation_directory": None,
+  "simulation_directory": "/Users/Robert/Desktop/updated_molecular_dynamics_simulation",
   "simulation_box_size": 40,
   "number_water_molecules": 40,
   "time_step": 0.0002,

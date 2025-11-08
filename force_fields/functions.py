@@ -1,8 +1,6 @@
-"""
-# TODO To be documented
-"""
 import numpy as np
 import math
+from typing import List, Dict, Tuple
 
 # Numpy Options
 np.set_printoptions(linewidth=int(1e5))
@@ -11,9 +9,23 @@ np.set_printoptions(linewidth=int(1e5))
 ######################################
 # Computation Of Gradient Potentials #
 ######################################
+def compute_lennard_jones_gradient_potential(positions: np.ndarray, molecule_indexes: np.ndarray,
+                                             atom_types: np.ndarray, atom_index: int, sigma: Dict,
+                                             epsilon: Dict) -> np.ndarray:
+    """
+    Calculates the gradient of the Lennard-Jones potential for a single atom.
 
-# TODO Remove pairwise potentials for the same molecule so add bond argument
-def compute_lennard_jones_gradient_potential(positions, molecule_indexes, atom_types, atom_index, sigma, epsilon):
+    Args:
+        positions (np.ndarray): Array of all particle positions.
+        molecule_indexes (np.ndarray): Array of molecule indices for each particle.
+        atom_types (np.ndarray): Array of atom types for each particle.
+        atom_index (int): The index of the atom for which to calculate the potential.
+        sigma (dict): Dictionary of sigma values for Lennard-Jones potential.
+        epsilon (dict): Dictionary of epsilon values for Lennard-Jones potential.
+
+    Returns:
+        np.ndarray: The gradient of the Lennard-Jones potential for the specified atom.
+    """
     number_particles = positions.shape[0]
 
     atom_type = atom_types[atom_index]
@@ -80,11 +92,18 @@ def compute_lennard_jones_gradient_potential(positions, molecule_indexes, atom_t
     return lennard_jones_gradient_potential
 
 
-def compute_bond_energy_gradient_potential(positions, bonds, dimensions):
-    # bonds is a list that contains these elements
-    # element_1=[first_atom_index, second_atom_index, bond length , bond strength]
-    # element_2=[first_atom_index, second_atom_index, bond length , bond strength]
-    # ...
+def compute_bond_energy_gradient_potential(positions: np.ndarray, bonds: List, dimensions: int) -> np.ndarray:
+    """
+    Computes the gradient of the bond energy potential for all atoms.
+
+    Args:
+        positions (np.ndarray): Array of all particle positions.
+        bonds (list): List of bonds, where each bond is [atom1_idx, atom2_idx, length, strength].
+        dimensions (int): The number of dimensions in the simulation.
+
+    Returns:
+        np.ndarray: An array of bond gradient potentials for each atom.
+    """
     number_particles = positions.shape[0]
 
     # We initialise with 0's bond gradient potentials for every position since each atom is not necessarily bonded
@@ -119,7 +138,18 @@ def compute_bond_energy_gradient_potential(positions, bonds, dimensions):
     return bond_gradient_potentials
 
 
-def compute_angle_gradient_potential(positions, angles, dimensions):
+def compute_angle_gradient_potential(positions: np.ndarray, angles: List, dimensions: int) -> np.ndarray:
+    """
+    Computes the gradient of the angle potential for all atoms.
+
+    Args:
+        positions (np.ndarray): Array of all particle positions.
+        angles (list): List of angles, where each angle is [atom1_idx, atom2_idx, atom3_idx, angle, strength].
+        dimensions (int): The number of dimensions in the simulation.
+
+    Returns:
+        np.ndarray: An array of angle gradient potentials for each atom.
+    """
     number_particles = positions.shape[0]
 
     angle_gradient_potentials = np.zeros([number_particles, dimensions])
@@ -130,7 +160,6 @@ def compute_angle_gradient_potential(positions, angles, dimensions):
             second_atom = angles[angle_index][1]
             third_atom = angles[angle_index][2]
 
-            # TODO If statement to be checked
             if atom_index in [first_atom, second_atom, third_atom]:
                 equilibrium_angle = angles[angle_index][3]
                 spring_angle_constant = angles[angle_index][4]
@@ -177,7 +206,21 @@ def compute_angle_gradient_potential(positions, angles, dimensions):
     return angle_gradient_potentials
 
 
-def compute_coulomb_force(positions, charges, particle_index, molecule_indexes, coulombs_constant):
+def compute_coulomb_force(positions: np.ndarray, charges: np.ndarray, particle_index: int,
+                          molecule_indexes: np.ndarray, coulombs_constant: float) -> np.ndarray:
+    """
+    Calculates the electrostatic (Coulomb) force on a single particle.
+
+    Args:
+        positions (np.ndarray): Array of all particle positions.
+        charges (np.ndarray): Array of charges for each particle.
+        particle_index (int): The index of the particle for which to calculate the force.
+        molecule_indexes (np.ndarray): Array of molecule indices for each particle.
+        coulombs_constant (float): The Coulomb's constant.
+
+    Returns:
+        np.ndarray: The electrostatic force vector on the specified particle.
+    """
     number_particles = positions.shape[0]
 
     particle_charge = charges[particle_index]
@@ -208,12 +251,40 @@ def compute_coulomb_force(positions, charges, particle_index, molecule_indexes, 
     return electrostatic_force
 
 
-####################################
-# End Of Computation Of Potentials #
-####################################
+################################################
+# End Of Computation Of Gradient of Potentials #
+################################################
 
-def update_velocity_using_forces(positions, velocities, bonds, angles, molecule_indexes, electrical_charges,
-                                 coulombs_constant, time_step, sigma, epsilon, masses, atom_types, dimensions):
+def update_velocity_using_forces(positions: np.ndarray, velocities: np.ndarray, bonds: List, angles: List,
+                                 molecule_indexes: np.ndarray, electrical_charges: np.ndarray,
+                                 coulombs_constant: float, time_step: float, sigma: Dict, epsilon: Dict,
+                                 masses: np.ndarray, atom_types: np.ndarray, dimensions: int) -> Tuple[
+    np.ndarray, np.ndarray]:
+    """
+    Updates particle velocities based on the calculated forces.
+
+    This function calculates the total force on each particle from Lennard-Jones,
+    bond, angle, and Coulomb interactions, then computes the acceleration and
+    updates the velocities.
+
+    Args:
+        positions (np.ndarray): Array of all particle positions.
+        velocities (np.ndarray): Array of all particle velocities.
+        bonds (list): List of all bonds.
+        angles (list): List of all angles.
+        molecule_indexes (np.ndarray): Array of molecule indices for each particle.
+        electrical_charges (np.ndarray): Array of electrical charges for each particle.
+        coulombs_constant (float): The Coulomb's constant.
+        time_step (float): The simulation time step.
+        sigma (dict): Dictionary of sigma values for Lennard-Jones potential.
+        epsilon (dict): Dictionary of epsilon values for Lennard-Jones potential.
+        masses (np.ndarray): Array of masses for each particle.
+        atom_types (np.ndarray): Array of atom types for each particle.
+        dimensions (int): The number of dimensions in the simulation.
+
+    Returns:
+        tuple: A tuple containing the updated velocities and the calculated accelerations.
+    """
     number_particles = positions.shape[0]
     # Compute Forces interacting on all molecules based on leonard jones interactions
     forces = -np.array([compute_lennard_jones_gradient_potential(positions=positions, molecule_indexes=molecule_indexes,
@@ -246,8 +317,22 @@ def update_velocity_using_forces(positions, velocities, bonds, angles, molecule_
     return updated_velocities, accelerations
 
 
-# todo to be changed since it need to be double checked to maintain temperature
-def correct_velocities_based_on_temperature(velocities, masses, boltzman_constant, desired_temperature):
+def correct_velocities_based_on_temperature(velocities: np.ndarray, masses: np.ndarray, boltzman_constant: float,
+                                            desired_temperature: float) -> np.ndarray:
+    """
+    Applies a velocity scaling thermostat to adjust particle velocities.
+
+    This function scales the velocities of all particles to match a desired temperature.
+
+    Args:
+        velocities (np.ndarray): Array of all particle velocities.
+        masses (np.ndarray): Array of masses for each particle.
+        boltzman_constant (float): The Boltzmann constant.
+        desired_temperature (float): The target temperature.
+
+    Returns:
+        np.ndarray: The corrected velocities.
+    """
     number_particles = len(velocities)
     kinetic_energy = 0.5 * sum(sum(masses * np.transpose(velocities * velocities)))
     average_kinetic_energy = kinetic_energy / number_particles
@@ -263,8 +348,18 @@ def correct_velocities_based_on_temperature(velocities, masses, boltzman_constan
     return corrected_velocities
 
 
-def correct_velocities_based_on_target_velocity_distributions(velocities, mass_dictionary, boltzman_constant,
-                                                              target_velocity_distributions):
+def correct_velocities_based_on_target_velocity_distributions(velocities: np.ndarray,
+                                                              target_velocity_distributions: Dict) -> np.ndarray:
+    """
+    Adjusts velocities to match a target Maxwell-Boltzmann distribution.
+
+    Args:
+        velocities (np.ndarray): Array of all particle velocities.
+        target_velocity_distributions (dict): Dictionary with target speed norms for 'hydrogen' and 'oxygen'.
+
+    Returns:
+        np.ndarray: The corrected velocities.
+    """
     number_particles = len(velocities)
     hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
     oxygen_indices = [index for index in range(number_particles) if index % 3 == 1]
@@ -305,7 +400,19 @@ def correct_velocities_based_on_target_velocity_distributions(velocities, mass_d
     return corrected_velocities
 
 
-def merge_velocities(hydrogen_velocities, oxygen_velocities, number_particles):
+def merge_velocities(hydrogen_velocities: np.ndarray, oxygen_velocities: np.ndarray,
+                     number_particles: int) -> np.ndarray:
+    """
+    Merges separate velocity arrays for hydrogen and oxygen atoms into a single array.
+
+    Args:
+        hydrogen_velocities (np.ndarray): Array of hydrogen velocities.
+        oxygen_velocities (np.ndarray): Array of oxygen velocities.
+        number_particles (int): The total number of particles.
+
+    Returns:
+        np.ndarray: A single array containing all particle velocities.
+    """
     hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
     oxygen_indices = [index for index in range(number_particles) if index % 3 == 1]
     velocities = np.zeros((number_particles, 3))
@@ -319,7 +426,17 @@ def merge_velocities(hydrogen_velocities, oxygen_velocities, number_particles):
     return velocities
 
 
-def compute_temperature(velocities, mass_dictionary, message_description, boltzman_constant):
+def compute_temperature(velocities: np.ndarray, mass_dictionary: Dict, message_description: str,
+                        boltzman_constant: float):
+    """
+    Calculates and prints the current temperature of the system.
+
+    Args:
+        velocities (np.ndarray): Array of all particle velocities.
+        mass_dictionary (dict): Dictionary of masses for each atom type.
+        message_description (str): A message to print before the temperature.
+        boltzman_constant (float): The Boltzmann constant.
+    """
     number_particles = len(velocities)
 
     hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
@@ -339,7 +456,22 @@ def compute_temperature(velocities, mass_dictionary, message_description, boltzm
     print(f"{message_description} : {current_temperature}")
 
 
-def update_positions_and_velocities(positions, velocities, time_step, simulation_box_size, boundary_conditions):
+def update_positions_and_velocities(positions: np.ndarray, velocities: np.ndarray, time_step: float,
+                                    simulation_box_size: float, boundary_conditions: str) -> Tuple[
+    np.ndarray, np.ndarray]:
+    """
+    Updates particle positions using the Verlet algorithm and applies boundary conditions.
+
+    Args:
+        positions (np.ndarray): Array of all particle positions.
+        velocities (np.ndarray): Array of all particle velocities.
+        time_step (float): The simulation time step.
+        simulation_box_size (float): The size of the simulation box.
+        boundary_conditions (str): The type of boundary conditions ('periodic' or 'reflective').
+
+    Returns:
+        tuple: A tuple containing the updated positions and velocities.
+    """
     if boundary_conditions not in ["periodic", "reflective"]:
         raise (f"Boundary Conditions Were Not Set For The Simulation Please Set Them To Either :"
                f"'periodic' or 'reflective'")
@@ -360,7 +492,22 @@ def update_positions_and_velocities(positions, velocities, time_step, simulation
     return updated_positions, updated_velocities
 
 
-def apply_reflection_to_positions_and_velocities(positions, velocities, simulation_box_size):
+def apply_reflection_to_positions_and_velocities(positions: np.ndarray, velocities: np.ndarray,
+                                                 simulation_box_size: float) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Applies reflective boundary conditions to particles.
+
+    If a particle has moved outside the simulation box, its position is reflected
+    back inside, and its velocity component perpendicular to the boundary is inverted.
+
+    Args:
+        positions (np.ndarray): Array of all particle positions.
+        velocities (np.ndarray): Array of all particle velocities.
+        simulation_box_size (float): The size of the simulation box.
+
+    Returns:
+        tuple: A tuple containing the updated positions and velocities.
+    """
     updated_velocities = velocities
     updated_positions = positions
 

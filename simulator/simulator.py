@@ -35,6 +35,9 @@ class Simulator:
         self.dimensions = 3
         self.boundary_condition = boundary_condition
 
+        if boundary_condition == "periodic":
+            raise NotImplementedError
+
         self._create_simulation_directory()
 
         (self.positions, self.velocities, self.masses, self.particle_types, self.atom_types,
@@ -129,6 +132,7 @@ class Simulator:
         """
         for iteration_index in tqdm(range(self.simulation_steps),
                                     desc=f"Running {self.boundary_condition}_{self.desired_temperature}K Simulation :"):
+            # First get velocities based on potential enegies
             self.velocities, _ = update_velocity_using_forces(
                 positions=self.positions,
                 velocities=self.velocities,
@@ -145,18 +149,22 @@ class Simulator:
                 dimensions=self.dimensions)
 
             if iteration_index % 25 == 0:
+                # Correct the velocities based on desired temperature through target velocities
+                # This avoids having some particles hog up most of the energy of the system
+                # This can be seen by most particles not moving and one or two having high velocity / kinetic energy
                 self.velocities = correct_velocities_based_on_target_velocity_distributions(
                     velocities=self.velocities,
-                    mass_dictionary=self.mass_dictionary,
-                    boltzman_constant=self.boltzman_constant,
                     target_velocity_distributions=self.target_velocity_distributions)
             else:
+                # Correct velocities based on temperature
                 self.velocities = correct_velocities_based_on_temperature(
                     velocities=self.velocities,
                     masses=self.masses,
                     boltzman_constant=self.boltzman_constant,
                     desired_temperature=self.desired_temperature)
 
+            # Update positions based on velocities
+            # Also take into account boundary types in order to manage particles at the simulation boundary
             self.positions, self.velocities = update_positions_and_velocities(
                 positions=self.positions,
                 velocities=self.velocities,
