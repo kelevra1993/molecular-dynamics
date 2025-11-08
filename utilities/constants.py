@@ -60,3 +60,6 @@ boltzman_constant = boltzman_constant / 1E24
 avagadros_constant_g_wise = 6.02228E26  # Avogardos constant x 1000 (g->kg)
 electron_charge = 1.60217662E-19  # electron charge in coulombs
 coulombs_constant = 8.9875517923E9 * avagadros_constant_g_wise * 1E30 * electron_charge * electron_charge / 1E24  # electrostatic constant in Daltons, electron charges, picosecond, angstrom units
+
+print(f"'boltzman_constant' : {boltzman_constant}")
+print(f"'coulombs_constant' : {coulombs_constant}")

@@ -424,3 +424,18 @@ def make_json_serializable(obj):
         return [make_json_serializable(v) for v in obj]
     else:
         return obj
+
+
+def read_json(file_path: str) -> dict:
+    """
+    Reads a JSON file and returns its contents as a dictionary.
+
+    Args:
+        file_path (str): The path to the JSON file to be read.
+
+    Returns:
+        dict: The contents of the JSON file as a Python dictionary.
+    """
+
+    with open(file_path) as file:
+        return json.load(file)

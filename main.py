@@ -107,4 +107,4 @@ for desired_temperature in desired_temperatures:
 
             write_positions_to_file(positions=positions, simulation_box_size=simulation_box_size,
                                     simulation_directory=simulation_destination, iteration_index=iteration_index,
-                                    particle_types=particle_types)  # exit()
+                                    particle_types=particle_types)
