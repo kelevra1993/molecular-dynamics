@@ -64,7 +64,7 @@ poetry env activate
 source .venv/bin/activate
 
 # Then run the simulation
-poetry run python simulator/simulator.py
+python simulator/simulator.py
 ```
 
 The run of the script should look something like this ( for instance for a temperature of 400K):
