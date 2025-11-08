@@ -6,7 +6,7 @@
 ##############################################################################################
 
 # The absolute path to the directory where simulation output files (.dump) will be saved.
-simulation_directory: None
+simulation_directory: "simulations"
 
 # The size of the cubic simulation box in Angstroms.
 simulation_box_size: 40
