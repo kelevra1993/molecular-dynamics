@@ -6,6 +6,7 @@ from simulator.simulator import Simulator
 
 def main():
     configuration_folder = os.path.join(dirname(__file__), "configurations")
+
     simulation_configuration = read_json(os.path.join(configuration_folder, "simulation_configurations.json"))
 
     for desired_temperature in [200]:

@@ -4,9 +4,6 @@
 import numpy as np
 import math
 
-from utilities.constants import number_particles
-from utilities.utils import print_blue, print_yellow, print_red
-
 # Numpy Options
 np.set_printoptions(linewidth=int(1e5))
 
@@ -223,7 +220,6 @@ def update_velocity_using_forces(positions, velocities, bonds, angles, molecule_
                                                                  atom_types=atom_types, atom_index=index, sigma=sigma,
                                                                  epsilon=epsilon) for index in range(len(positions))])
 
-
     # Add forces emmanating from bond potentials
     bond_gradient_potentials = compute_bond_energy_gradient_potential(positions=positions, bonds=bonds,
                                                                       dimensions=dimensions)
@@ -269,6 +265,7 @@ def correct_velocities_based_on_temperature(velocities, masses, boltzman_constan
 
 def correct_velocities_based_on_target_velocity_distributions(velocities, mass_dictionary, boltzman_constant,
                                                               target_velocity_distributions):
+    number_particles = len(velocities)
     hydrogen_indices = [index for index in range(number_particles) if index % 3 != 1]
     oxygen_indices = [index for index in range(number_particles) if index % 3 == 1]
 
@@ -304,7 +301,6 @@ def correct_velocities_based_on_target_velocity_distributions(velocities, mass_d
     corrected_velocities = merge_velocities(hydrogen_velocities=corrected_hydrogen_velocities,
                                             oxygen_velocities=corrected_oxygen_velocities,
                                             number_particles=number_particles)
-
 
     return corrected_velocities
 

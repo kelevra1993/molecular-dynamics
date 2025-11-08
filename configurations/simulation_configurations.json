@@ -1,10 +1,12 @@
 {
+  "simulation_directory": None,
   "simulation_box_size": 40,
+  "number_water_molecules": 40,
   "time_step": 0.0002,
   "simulation_steps": 100000,
   "boltzman_constant": 0.8314654859720001,
   "coulombs_constant": 138938.66759164268,
-  lennard_jones_parameters: {
+  "lennard_jones_parameters": {
     "epsilon": {
       "oxygen_oxygen": 62.87,
       "oxygen_hydrogen": 14.2723,

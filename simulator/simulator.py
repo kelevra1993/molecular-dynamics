@@ -4,11 +4,12 @@ import numpy as np
 from tqdm import tqdm
 
 from molecules.water import WaterMolecule
+
 from utilities.utils import read_json, get_target_water_velocity_distributions, write_positions_to_file
+
 from force_fields.functions import update_velocity_using_forces, \
     correct_velocities_based_on_target_velocity_distributions, correct_velocities_based_on_temperature, \
     update_positions_and_velocities
-
 
 class Simulator:
     def __init__(self, number_water_molecules, simulation_configuration, desired_temperature, boundary_condition):
