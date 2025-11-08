@@ -11,6 +11,7 @@ from force_fields.functions import update_velocity_using_forces, \
     correct_velocities_based_on_target_velocity_distributions, correct_velocities_based_on_temperature, \
     update_positions_and_velocities
 
+
 class Simulator:
     def __init__(self, number_water_molecules, simulation_configuration, desired_temperature, boundary_condition):
         """
@@ -37,7 +38,7 @@ class Simulator:
 
         if boundary_condition == "periodic":
             raise NotImplementedError
-
+        self.jump_line()
         self._create_simulation_directory()
 
         (self.positions, self.velocities, self.masses, self.particle_types, self.atom_types,
@@ -123,6 +124,13 @@ class Simulator:
         return (positions, velocities, masses, particle_types, atom_types,
                 molecule_indexes, electrical_charges, bonds, angles)
 
+    @staticmethod
+    def jump_line():
+        """
+        Prints an empty line
+        """
+        print("")
+
     def run_simulation(self):
         """
         Runs the molecular dynamics simulation.
@@ -131,6 +139,7 @@ class Simulator:
         number of simulation steps. In each step, it calculates forces, updates velocities
         and positions, and writes the output to a file.
         """
+
         for iteration_index in tqdm(range(self.simulation_steps),
                                     desc=f"Running {self.boundary_condition}_{self.desired_temperature}K Simulation :"):
             # First get velocities based on potential enegies
@@ -179,3 +188,4 @@ class Simulator:
                 simulation_directory=self.simulation_destination,
                 iteration_index=iteration_index,
                 particle_types=self.particle_types)
+        self.jump_line()
