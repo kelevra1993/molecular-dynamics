@@ -27,18 +27,16 @@ All simulation parameters, such as the number of molecules, temperature, and for
 
 ### Installation
 
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/your-username/molecular-dynamics.git
-    ```
-2.  Navigate to the project directory:
-    ```bash
-    cd molecular-dynamics
-    ```
-3.  Install the dependencies using Poetry:
-    ```bash
-    poetry install
-    ```
+```bash
+# Clone the repository
+git clone git@github.com:kelevra1993/molecular-dynamics.git
+
+# Navigate to the project directory
+cd molecular-dynamics
+
+# Install the dependencies using Poetry
+poetry install
+```
 
 ### Running the Simulation
 
