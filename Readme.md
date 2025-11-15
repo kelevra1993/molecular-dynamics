@@ -12,7 +12,7 @@ The key components implemented are:
 *   **Force Field:** Interactions are modeled using Lennard-Jones potentials, bond stretching, angle bending, and electrostatic forces.
 *   **Integration:** The [Verlet integration](https://en.wikipedia.org/wiki/Verlet_integration) algorithm is used to update particle positions and velocities.
 *   **Thermostat:** A velocity scaling thermostat is used to maintain the system at a desired temperature.
-*   **Boundary Conditions:** The simulation supports both periodic and reflective boundary conditions.
+*   **Boundary Conditions:** The simulation only supports reflective boundary condition and not the periodic boundary condition.
 
 ## Configuration
 
